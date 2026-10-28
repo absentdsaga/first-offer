@@ -212,6 +212,67 @@
   }
   if (window.speechSynthesis && speechSynthesis.addEventListener) speechSynthesis.addEventListener('voiceschanged', function () {});
 
+  // ---------- cloud mic fallback (AssemblyAI streaming) ----------
+  // Brave and some browsers expose webkitSpeechRecognition but it never returns words ('network' error).
+  // There we stream 16 kHz PCM to AssemblyAI with a short-lived token from our server.
+  var TOKEN_URL = 'https://dioni.zo.space/api/coach-token';
+  var useCloud = !!navigator.brave || /[?&]cloudmic=1/.test(location.search) || !(window.SpeechRecognition || window.webkitSpeechRecognition);
+  var cloud = null;
+  function startCloud() {
+    if (cloud || !wantListen) return;
+    var c = cloud = { closed: false, lastTurn: -1 };
+    emit('interim', { text: '…' });
+    Promise.all([
+      navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } }),
+      fetch(TOKEN_URL, { cache: 'no-store' }).then(function (r) { if (!r.ok) throw new Error('token ' + r.status); return r.json(); })
+    ]).then(function (res) {
+      c.stream = res[0];
+      if (c.closed) { c.stream.getTracks().forEach(function (t) { t.stop(); }); return; }
+      var lang = (S && S.cart.lang) || 'en-US';
+      var q = new URLSearchParams({ sample_rate: 16000, encoding: 'pcm_s16le', format_turns: 'false',
+        speech_model: /^en/i.test(lang) ? 'universal-streaming-english' : 'universal-streaming-multilingual', token: res[1].token });
+      var ws = c.ws = new WebSocket('wss://streaming.assemblyai.com/v3/ws?' + q);
+      ws.binaryType = 'arraybuffer';
+      ws.onopen = function () { emit('interim', { text: '' }); };
+      ws.onmessage = function (ev) {
+        var m; try { m = JSON.parse(ev.data); } catch (e) { return; }
+        if (m.type !== 'Turn' || bossTalking) return;
+        var t = (m.transcript || '').trim();
+        if (m.end_of_turn) {
+          if (m.turn_order === c.lastTurn) return;
+          c.lastTurn = m.turn_order; emit('interim', { text: '' });
+          if (t) say(t);
+        } else if (t) emit('interim', { text: t });
+      };
+      ws.onclose = function () { if (cloud === c) { stopCloud(); if (wantListen) setTimeout(startCloud, 400); } };
+      var AC = window.AudioContext || window.webkitAudioContext, ctx = c.ctx = new AC();
+      var src = ctx.createMediaStreamSource(c.stream), sp = ctx.createScriptProcessor(4096, 1, 1), ratio = ctx.sampleRate / 16000;
+      sp.onaudioprocess = function (e) {
+        if (ws.readyState !== 1 || bossTalking) return;
+        var d = e.inputBuffer.getChannelData(0), n = Math.floor(d.length / ratio), out = new Int16Array(n);
+        for (var i = 0; i < n; i++) {
+          var a = Math.floor(i * ratio), b = Math.min(d.length, Math.floor((i + 1) * ratio)), sum = 0;
+          for (var j = a; j < b; j++) sum += d[j];
+          var v = Math.max(-1, Math.min(1, sum / Math.max(1, b - a)));
+          out[i] = v < 0 ? v * 0x8000 : v * 0x7fff;
+        }
+        ws.send(out.buffer);
+      };
+      var g = ctx.createGain(); g.gain.value = 0; src.connect(sp); sp.connect(g); g.connect(ctx.destination);
+      if (ctx.state === 'suspended') ctx.resume();
+    }).catch(function (e) {
+      if (cloud === c) cloud = null;
+      wantListen = false;
+      emit('error', { message: 'Mic: ' + (e && (e.name || e.message) || e) });
+    });
+  }
+  function stopCloud() {
+    var c = cloud; cloud = null; if (!c) return; c.closed = true;
+    try { if (c.ws && c.ws.readyState === 1) c.ws.send(JSON.stringify({ type: 'Terminate' })); if (c.ws) c.ws.close(); } catch (e) {}
+    try { if (c.stream) c.stream.getTracks().forEach(function (t) { t.stop(); }); } catch (e) {}
+    try { if (c.ctx) c.ctx.close(); } catch (e) {}
+  }
+
   // ---------- mic (Web Speech API) ----------
   function makeRec() {
     var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -230,6 +291,9 @@
     };
     r.onerror = function (e) {
       if (e.error === 'no-speech' || e.error === 'aborted') return;
+      if ((e.error === 'network' || e.error === 'service-not-allowed' || e.error === 'language-not-supported') && wantListen) {
+        useCloud = true; recRunning = false; startCloud(); return;   // browser speech service missing (Brave): go cloud
+      }
       if (e.error === 'not-allowed' || e.error === 'service-not-allowed' || e.error === 'audio-capture') wantListen = false;
       emit('error', { message: 'Mic: ' + e.error });
     };
@@ -240,6 +304,7 @@
     return r;
   }
   function listen() {
+    if (useCloud) { wantListen = true; startCloud(); return true; }
     if (!rec) rec = makeRec();
     if (!rec) { emit('error', { message: 'Speech recognition not supported in this browser (use Chrome). Typing still works.' }); return false; }
     wantListen = true;
@@ -247,7 +312,7 @@
     resumeRec();
     return true;
   }
-  function stopListening() { wantListen = false; pauseRec(); emit('interim', { text: '' }); }
+  function stopListening() { wantListen = false; pauseRec(); stopCloud(); emit('interim', { text: '' }); }
   function pauseRec() { if (rec && recRunning) { try { rec.abort(); } catch (e) {} } }
   function resumeRec() {
     if (!rec || !wantListen || bossTalking || recRunning || (S && S.over)) return;
