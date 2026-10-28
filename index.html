@@ -243,12 +243,33 @@ button:focus-visible, input:focus-visible { outline: 3px solid #fff; outline-off
   .bob, .blink, #micBtn.on, .bar.low .fill, #crt { animation: none !important; }
   #fight.shake { animation: none !important; }
 }
+
+/* coach toggle + walkthrough */
+body.nocoach .coach { display: none !important; }
+#coachBtn.on { color: #1a1008; background: var(--gold); border-color: var(--gold); }
+#tourBtn { color: var(--ink); border-color: var(--ink); background: #000; }
+#tour { position: fixed; inset: 0; z-index: 200; background: rgba(7,6,4,.88); display: flex; align-items: center; justify-content: center; padding: 16px; }
+#tour.hidden { display: none; }
+#tour .card { max-width: 580px; width: 100%; background: var(--panel); border: 4px solid var(--gold); box-shadow: 0 0 0 4px #000, 8px 8px 0 4px var(--red); padding: 22px 20px 18px; }
+#tour .step { color: var(--gold-2); font-size: 10px; margin-bottom: 12px; }
+#tour h2 { margin: 0 0 14px; font-size: clamp(13px, 3vw, 18px); color: var(--gold); line-height: 1.5; }
+#tour p { margin: 0 0 10px; font-family: var(--talk); font-size: clamp(19px, 3.6vw, 24px); line-height: 1.25; color: var(--ink); }
+#tour p b { color: var(--green); font-weight: normal; }
+#tour p i { color: #ff6b5e; font-style: normal; }
+#tour .row { display: flex; justify-content: space-between; gap: 10px; margin-top: 16px; }
+#tour .row button { font-family: var(--display); font-size: 11px; padding: 10px 14px; background: #000; border: 3px solid var(--dim); color: var(--ink); cursor: pointer; }
+#tour #tourNext { border-color: var(--red); background: var(--red); color: #fff; }
+#tour .dots { display: flex; gap: 6px; justify-content: center; margin-top: 14px; }
+#tour .dots span { width: 8px; height: 8px; background: var(--dim); }
+#tour .dots span.cur { background: var(--gold); }
 </style>
 </head>
 <body>
 <div id="crt"></div>
 <div id="toggles">
   <span id="offlineChip" class="chip hidden">ARCADE CPU</span>
+  <button id="tourBtn" class="chip" type="button" title="How to play">? HOW TO PLAY</button>
+  <button id="coachBtn" class="chip on" type="button" title="Show or hide the coach tips">COACH ON</button>
   <button id="muteBtn" class="chip" type="button" title="Mute (M)">SOUND ON</button>
 </div>
 
@@ -337,7 +358,21 @@ button:focus-visible, input:focus-visible { outline: 3px solid #fff; outline-off
   </div>
 </section>
 
+<div id="tour" class="hidden" role="dialog" aria-modal="true">
+  <div class="card">
+    <div class="step" id="tourStep">1 / 7</div>
+    <h2 id="tourTitle"></h2>
+    <div id="tourBody"></div>
+    <div class="dots" id="tourDots"></div>
+    <div class="row">
+      <button type="button" id="tourSkip">SKIP</button>
+      <div style="display:flex;gap:8px"><button type="button" id="tourBack">&lt; BACK</button><button type="button" id="tourNext">NEXT &gt;</button></div>
+    </div>
+  </div>
+</div>
+
 <script src="cartridges.js"></script>
+<script src="voice/manifest.js"></script>
 <script src="engine.js"></script>
 <script>
 (function () {
@@ -537,11 +572,57 @@ button:focus-visible, input:focus-visible { outline: 3px solid #fff; outline-off
   function toggleMute() {
     muted = !muted; updateMute();
     try { localStorage.setItem('fo_muted', muted ? '1' : '0'); } catch (e) {}
-    if (muted && window.speechSynthesis) speechSynthesis.cancel();
+    F.config.muted = muted;
+    if (muted) F.stopVoice();
     sfx('select');
   }
   $('muteBtn').addEventListener('click', toggleMute);
+  F.config.muted = muted;
   updateMute();
+
+  // ---------- coach on/off ----------
+  var coachOn = true;
+  try { coachOn = localStorage.getItem('fo_coach') !== '0'; } catch (e) {}
+  function updateCoach() {
+    document.body.classList.toggle('nocoach', !coachOn);
+    $('coachBtn').textContent = coachOn ? 'COACH ON' : 'COACH OFF';
+    $('coachBtn').classList.toggle('on', coachOn);
+  }
+  $('coachBtn').addEventListener('click', function () {
+    coachOn = !coachOn; updateCoach(); sfx('select');
+    try { localStorage.setItem('fo_coach', coachOn ? '1' : '0'); } catch (e) {}
+  });
+  updateCoach();
+
+  // ---------- walkthrough ----------
+  var TOUR = [
+    ['Welcome to FIRST OFFER', '<p>An arcade fighting game where <b>your words are the moves</b>.</p><p>You face people who want the better end of a deal: a car dealer, a landlord, a recruiter. You fight back by talking, the way you would in real life.</p>'],
+    ['Pick a cartridge', '<p><b>NEGOTIATE</b> is in English. You win dollars above the first offer they make you.</p><p><b>ESPA&Ntilde;OL</b> is the same fight in Spanish. You score points for speaking Spanish well, so it doubles as language practice.</p>'],
+    ['Choose your opponent', '<p>Each cartridge has three bosses. Start at the first one and work up to the final boss.</p><p>Every boss has their own voice and personality, and they play hardball.</p>'],
+    ['Talk to fight', '<p>Press <b>PUSH TO TALK</b> and say your line out loud. If the room is loud, type your line and press Enter.</p><p>The boss hears you and answers back out loud, in character.</p>'],
+    ['What lands a hit', '<p>Good moves damage the boss: <b>name a specific number</b>, <b>cite the market</b>, <b>ask a question</b>, <b>ask for time</b>, or <b>trade for extras</b> like a signing bonus or a warranty.</p><p>Caving damages you: <i>"I\'m flexible"</i>, <i>apologizing</i>, <i>giving a range</i>, or <i>taking the first offer</i>.</p>'],
+    ['Your coach', '<p>The <b>TIP</b> line under the fight coaches you after every move.</p><p>Want a harder fight? Tap <b>COACH ON</b> in the top right to switch it off. Tap again to bring it back. The final boss never gives tips.</p>'],
+    ['Win the fight', '<p>Knock the boss\'s health bar to zero. Your score is how much you got above their first offer.</p><p>After the fight you see every hit you landed and every hit you took. Reopen this guide any time with <b>? HOW TO PLAY</b>.</p>']
+  ];
+  var tourI = 0;
+  function renderTour() {
+    $('tourStep').textContent = (tourI + 1) + ' / ' + TOUR.length;
+    $('tourTitle').textContent = TOUR[tourI][0];
+    $('tourBody').innerHTML = TOUR[tourI][1];
+    $('tourDots').innerHTML = TOUR.map(function (_, i) { return '<span' + (i === tourI ? ' class="cur"' : '') + '></span>'; }).join('');
+    $('tourBack').style.visibility = tourI ? 'visible' : 'hidden';
+    $('tourNext').innerHTML = tourI === TOUR.length - 1 ? 'PLAY!' : 'NEXT &gt;';
+    $('tourNext').focus();
+  }
+  function openTour() { tourI = 0; renderTour(); $('tour').classList.remove('hidden'); }
+  function closeTour() { $('tour').classList.add('hidden'); try { localStorage.setItem('fo_tour', '1'); } catch (e) {} }
+  $('tourBtn').addEventListener('click', function () { sfx('select'); openTour(); });
+  $('tourSkip').addEventListener('click', function () { sfx('select'); closeTour(); });
+  $('tourBack').addEventListener('click', function () { sfx('select'); if (tourI) { tourI--; renderTour(); } });
+  $('tourNext').addEventListener('click', function () { sfx('select'); if (tourI < TOUR.length - 1) { tourI++; renderTour(); } else closeTour(); });
+  $('tour').addEventListener('keydown', function (e) { e.stopPropagation(); if (e.key === 'Escape') closeTour(); });
+  var seenTour = false; try { seenTour = localStorage.getItem('fo_tour') === '1'; } catch (e) {}
+  if (!seenTour || /[?&]tour=1/.test(location.search)) openTour();
 
   function pressStart() { sfx('start'); show('carts'); }
   $('pressStart').addEventListener('click', pressStart);
@@ -902,7 +983,6 @@ button:focus-visible, input:focus-visible { outline: 3px solid #fff; outline-off
     G.lastBoss = e.text || '';
     typewrite(G.lastBoss);
     pose('bossActor', 'attack');
-    if (muted && window.speechSynthesis) setTimeout(function () { speechSynthesis.cancel(); }, 0);
   });
   F.on('playerLine', function (e) {
     $('playerText').classList.remove('ghost');

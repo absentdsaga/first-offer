@@ -2,7 +2,7 @@
    forceEnd(winner) ends the open round at once for the pitch key. winner is 'player', 'boss', or omitted (higher HP wins). */
 (function () {
   'use strict';
-  var config = { url: 'https://dioni.zo.space/api/first-offer', timeoutMs: 8000, offline: false, retryAfterMs: 30000,
+  var config = { url: 'https://dioni.zo.space/api/first-offer', timeoutMs: 8000, offline: false, muted: false, retryAfterMs: 30000,
     contentType: 'text/plain;charset=UTF-8' };   // JSON body; text/plain skips the CORS preflight round trip
   var handlers = {};
   var S = null;               // game state
@@ -127,7 +127,7 @@
     if (!cart) { emit('error', { message: 'Unknown cartridge: ' + cartridgeId }); return; }
     var bi = Math.max(0, Math.min(cart.bosses.length - 1, bossIndex | 0));
     gen++;
-    if (window.speechSynthesis) speechSynthesis.cancel();
+    stopVoice();
     S = { cart: cart, cartId: cartridgeId, bossIndex: bi, boss: cart.bosses[bi], history: [], bossHP: 100, playerHP: 100,
           value: 0, over: false, busy: false, queued: null, bestAsk: null, lastCanned: null, tip: '' };
     if (rec) rec.lang = cart.lang;
@@ -143,7 +143,7 @@
     if (S.busy) { S.queued = text; return; }
     var g = gen, history = S.history.slice();
     S.busy = true;
-    if (window.speechSynthesis && bossTalking) speechSynthesis.cancel();
+    if (bossTalking) stopVoice();
     S.history.push({ who: 'player', text: text });
     emit('playerLine', { text: text });
     emit('thinking', { on: true });
@@ -187,29 +187,70 @@
     }
   }
 
-  // ---------- boss voice (speechSynthesis) ----------
-  function pickVoice(lang) {
+  // ---------- boss voice ----------
+  // 1) scripted lines: pre-recorded in-character audio (voice/manifest.js) -> instant
+  // 2) live AI lines: browser voice tuned per boss; if the browser has no working voice (Brave), the server voice
+  var VOICE_URL = 'https://dioni.zo.space/api/first-offer-voice';
+  var CHAR = {   // per-boss browser-voice tuning: [rate, pitch, prefer female]
+    negotiate: [[1.2, 0.9, false], [0.85, 0.55, false], [1.1, 1.15, true]],
+    espanol:   [[1.15, 1.0, false], [1.0, 0.8, false], [0.9, 0.6, false]]
+  };
+  var FEMALE = /samantha|victoria|karen|moira|tessa|zira|female|woman|google us english|monica|paulina|helena|lucia|elena/i;
+  var audioEl = null, browserVoiceOk = null;
+  function pickVoice(lang, female) {
     if (!window.speechSynthesis) return null;
     var vs = speechSynthesis.getVoices() || [], l = (lang || '').toLowerCase(), base = l.split('-')[0];
     var norm = function (v) { return (v.lang || '').toLowerCase().replace('_', '-'); };
-    return vs.filter(function (v) { return norm(v) === l; })[0] || vs.filter(function (v) { return norm(v).split('-')[0] === base; })[0] || null;
+    var pool = vs.filter(function (v) { return norm(v) === l; });
+    if (!pool.length) pool = vs.filter(function (v) { return norm(v).split('-')[0] === base; });
+    var g = pool.filter(function (v) { return female ? FEMALE.test(v.name) : !FEMALE.test(v.name); });
+    return g[0] || pool[0] || null;
+  }
+  function talkStart(ms) { bossTalking = true; pauseRec(); clearTimeout(talkTimer); talkTimer = setTimeout(talkEnd, ms); }
+  function talkEnd() { clearTimeout(talkTimer); bossTalking = false; resumeRec(); }
+  function stopVoice() {
+    if (window.speechSynthesis) speechSynthesis.cancel();
+    if (audioEl) { try { audioEl.pause(); } catch (e) {} audioEl = null; }
+    if (bossTalking) talkEnd();
+  }
+  function playUrl(url, text, onFail) {
+    var a = audioEl = new Audio(url), myGen = gen, ended = false;
+    var done = function () { if (ended) return; ended = true; if (audioEl === a) audioEl = null; talkEnd(); };
+    a.onended = done;
+    a.onerror = function () { if (ended) return; ended = true; if (audioEl === a) audioEl = null; if (myGen === gen && onFail) onFail(); else talkEnd(); };
+    talkStart(4000 + text.length * 110);
+    var p = a.play(); if (p && p.catch) p.catch(function () { a.onerror(); });
+  }
+  function browserSay(text, ch) {
+    if (!window.speechSynthesis || !window.SpeechSynthesisUtterance) return false;
+    if (browserVoiceOk === false || !(speechSynthesis.getVoices() || []).length) return false;
+    try {
+      var u = new SpeechSynthesisUtterance(text), v = pickVoice(S.cart.lang, ch[2]), started = false, ended = false;
+      u.lang = S.cart.lang; u.rate = ch[0]; u.pitch = ch[1];
+      if (v) u.voice = v;
+      var done = function () { if (ended) return; ended = true; talkEnd(); };
+      u.onstart = function () { started = true; browserVoiceOk = true; };
+      u.onend = done; u.onerror = done;
+      talkStart(2500 + text.length * 90);
+      speechSynthesis.speak(u);
+      // browser accepted the line but never started talking (Brave): switch this device to the server voice
+      setTimeout(function () { if (!started && !ended) { browserVoiceOk = false; ended = true; speechSynthesis.cancel(); serverSay(text); } }, 1500);
+      return true;
+    } catch (e) { return false; }
+  }
+  function serverSay(text) {
+    if (!S) return;
+    playUrl(VOICE_URL + '?c=' + encodeURIComponent(S.cartId) + '&b=' + S.bossIndex + '&t=' + encodeURIComponent(text), text, talkEnd);
   }
   function bossSay(text) {
     S.history.push({ who: 'boss', text: text });
     emit('bossLine', { text: text });
-    if (!window.speechSynthesis || !window.SpeechSynthesisUtterance) return;
-    try {
-      var u = new SpeechSynthesisUtterance(text), v = pickVoice(S.cart.lang);
-      u.lang = S.cart.lang; u.pitch = 0.4; u.rate = 1.05;
-      if (v) u.voice = v;
-      var done = function () { if (u._done) return; u._done = true; clearTimeout(talkTimer); bossTalking = false; resumeRec(); };
-      u.onend = done; u.onerror = done;
-      bossTalking = true;
-      pauseRec();
-      clearTimeout(talkTimer);
-      talkTimer = setTimeout(done, 2500 + text.length * 90);   // safety net if onend never fires
-      speechSynthesis.speak(u);
-    } catch (e) { bossTalking = false; resumeRec(); }
+    if (config.muted) return;
+    stopVoice();
+    var ch = (CHAR[S.cartId] || [])[S.bossIndex] || [1, 1, false];
+    var rec = (window.FIRST_OFFER_VOICE || {})[text];
+    if (rec) { playUrl(rec, text, function () { if (!browserSay(text, ch)) serverSay(text); }); return; }
+    if (!browserSay(text, ch)) serverSay(text);
   }
   if (window.speechSynthesis && speechSynthesis.addEventListener) speechSynthesis.addEventListener('voiceschanged', function () {});
 
@@ -329,7 +370,7 @@
     S.over = true;
     if (winner !== 'player' && winner !== 'boss') winner = S.playerHP > S.bossHP ? 'player' : 'boss';
     if (winner === 'player') S.bossHP = 0; else S.playerHP = 0;
-    if (window.speechSynthesis) { try { speechSynthesis.cancel(); } catch (e) {} }
+    stopVoice();
     bossTalking = false;
     clearTimeout(talkTimer);
     emit('thinking', { on: false });
@@ -344,7 +385,7 @@
   }
 
   var api = {
-    start: start, say: say, listen: listen, stopListening: stopListening, on: on, off: off, config: config,
+    start: start, say: say, stopVoice: function () { stopVoice(); }, listen: listen, stopListening: stopListening, on: on, off: off, config: config,
     forceEnd: forceEnd,
     isListening: function () { return wantListen; },
     state: function () { return S && { cartridge: S.cartId, bossIndex: S.bossIndex, boss: S.boss.name, bossHP: S.bossHP, playerHP: S.playerHP, value: S.value, over: S.over, history: S.history.slice() }; },
