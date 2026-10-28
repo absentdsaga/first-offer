@@ -263,6 +263,7 @@ body.nocoach .coach { display: none !important; }
 #tour .dots span { width: 8px; height: 8px; background: var(--dim); }
 #tour .dots span.cur { background: var(--gold); }
 </style>
+<link rel="stylesheet" href="retro.css">
 </head>
 <body>
 <div id="crt"></div>
@@ -284,8 +285,8 @@ body.nocoach .coach { display: none !important; }
 <section id="carts" class="screen hidden">
   <h2 class="heading">SELECT CARTRIDGE</h2>
   <div class="carts">
-    <button class="btn cart" type="button" data-cart="negotiate"><span class="face" id="cartFaceN"></span>NEGOTIATE<small>THREE BOSSES. WIN DOLLARS ABOVE THE FIRST OFFER.</small></button>
-    <button class="btn cart red" type="button" data-cart="espanol"><span class="face" id="cartFaceS"></span>ESPAÑOL<small>THEY SPEAK SPANISH. ENGLISH HITS YOU.</small></button>
+    <button class="btn cart" type="button" data-cart="negotiate"><span class="shell"><span class="label"><span class="brand">FIRST OFFER<i>64</i></span><span class="face" id="cartFaceN"></span><span class="title">NEGOTIATE</span><small>THREE BOSSES. WIN DOLLARS ABOVE THE FIRST OFFER.</small><span class="seal">OK</span></span></span></button>
+    <button class="btn cart red" type="button" data-cart="espanol"><span class="shell"><span class="label"><span class="brand">FIRST OFFER<i>64</i></span><span class="face" id="cartFaceS"></span><span class="title">ESPAÑOL</span><small>THEY SPEAK SPANISH. ENGLISH HITS YOU.</small><span class="seal">OK</span></span></span></button>
   </div>
   <button class="btn back" type="button" data-go="title">&lt; BACK</button>
 </section>
@@ -374,6 +375,7 @@ body.nocoach .coach { display: none !important; }
 <script src="cartridges.js"></script>
 <script src="voice/manifest.js"></script>
 <script src="engine.js"></script>
+<script src="retro.js"></script>
 <script>
 (function () {
   'use strict';
@@ -550,6 +552,7 @@ body.nocoach .coach { display: none !important; }
     } catch (e) {}
   }
   function sfx(kind) {
+    if (window.Retro && window.Retro.sfx(kind)) return;
     if (kind === 'select') { tone(520, .06); tone(780, .08, 'square', .06); }
     else if (kind === 'start') { [523, 659, 784, 1046].forEach(function (f, i) { tone(f, .12, 'square', i * .07, 0, .07); }); }
     else if (kind === 'fight') { tone(196, .1, 'square'); tone(392, .16, 'square', .1); tone(784, .2, 'square', .22, 0, .07); }

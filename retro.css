@@ -1,0 +1,65 @@
+/* N64-style cartridge shells for the SELECT CARTRIDGE screen.
+   Kept out of index.html so character/fight edits don't collide. */
+.carts { gap: 28px; perspective: 900px; }
+.btn.cart {
+  position: relative; width: min(300px, 84vw); min-height: 0; aspect-ratio: 300 / 330; padding: 0; gap: 0;
+  border: none; box-shadow: none; background: none; color: var(--ink);
+  filter: drop-shadow(0 10px 0 #000) drop-shadow(0 18px 18px rgba(0,0,0,.6));
+  transition: transform .18s ease, filter .18s ease;
+}
+.btn.cart .shell {
+  position: absolute; inset: 0; display: flex; flex-direction: column; padding: 34px 22px 46px;
+  background:
+    linear-gradient(90deg, rgba(255,255,255,.10) 0 2px, transparent 2px calc(100% - 2px), rgba(0,0,0,.35) calc(100% - 2px)),
+    linear-gradient(180deg, #8d8f93 0%, #6d6f74 38%, #55575c 100%);
+  clip-path: polygon(
+    4% 0, 96% 0, 100% 3%, 100% 80%, 95% 80%, 95% 100%, 5% 100%, 5% 80%, 0 80%, 0 3%);
+}
+/* grip ridges along the top */
+.btn.cart .shell::before {
+  content: ""; position: absolute; left: 7%; right: 7%; top: 9px; height: 16px; pointer-events: none;
+  background: repeating-linear-gradient(90deg, #47494d 0 3px, #9a9ca0 3px 5px, #6d6f74 5px 9px);
+  border-radius: 2px; box-shadow: inset 0 2px 2px rgba(0,0,0,.5);
+}
+/* contact edge at the bottom */
+.btn.cart .shell::after {
+  content: ""; position: absolute; left: 12%; right: 12%; bottom: 8px; height: 14px; pointer-events: none;
+  background: repeating-linear-gradient(90deg, #2c2d30 0 6px, #3d3f43 6px 8px);
+  border-radius: 1px; box-shadow: inset 0 3px 3px rgba(0,0,0,.6);
+}
+/* the recessed label */
+.btn.cart .label {
+  position: relative; width: 100%; flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: space-between;
+  padding: 10px 10px 12px; border: 3px solid #3a3b3f; box-shadow: inset 0 0 0 2px rgba(255,255,255,.15), 0 2px 0 rgba(255,255,255,.18);
+  background:
+    radial-gradient(ellipse at 50% 30%, rgba(255,255,255,.35), transparent 60%),
+    linear-gradient(160deg, #ffe873 0%, #f6b21a 55%, #c8601a 100%);
+  color: #1a1008; overflow: hidden;
+}
+.btn.cart.red .label {
+  background:
+    radial-gradient(ellipse at 50% 30%, rgba(255,255,255,.3), transparent 60%),
+    linear-gradient(160deg, #ff6a3d 0%, #d4140e 55%, #6d0a12 100%);
+  color: #fff;
+}
+.btn.cart .label .brand {
+  align-self: stretch; display: flex; justify-content: space-between; font-size: 7px; letter-spacing: 1px;
+  padding: 4px 6px; background: rgba(0,0,0,.78); color: #f6e27a;
+}
+.btn.cart .label .brand i { font-style: normal; color: #7dff6b; }
+.btn.cart .label .face { width: 104px; height: 124px; filter: drop-shadow(3px 3px 0 rgba(0,0,0,.35)); }
+.btn.cart .label .title { font-size: clamp(12px, 1.8vw, 16px); text-shadow: 2px 2px 0 rgba(0,0,0,.25); }
+.btn.cart.red .label .title { text-shadow: 2px 2px 0 #000; }
+.btn.cart .label small { font-size: 7px; color: inherit; opacity: .85; line-height: 1.6; }
+.btn.cart .label .seal { position: absolute; right: 6px; bottom: 6px; width: 22px; height: 22px; border-radius: 50%;
+  background: radial-gradient(circle, #fff 0 35%, #c9a227 36% 100%); box-shadow: 0 0 0 2px rgba(0,0,0,.4); font-size: 0; }
+.btn.cart:hover, .btn.cart:focus { background: none; color: var(--ink); }
+.btn.cart:hover .shell, .btn.cart:focus .shell { filter: brightness(1.12); }
+.btn.cart:hover, .btn.cart:focus { transform: translateY(-10px) rotateX(6deg);
+  filter: drop-shadow(0 16px 0 #000) drop-shadow(0 0 22px rgba(246,226,122,.55));
+}
+.btn.cart.red:hover, .btn.cart.red:focus { filter: drop-shadow(0 16px 0 #000) drop-shadow(0 0 22px rgba(225,6,0,.6)); }
+.btn.cart:hover small, .btn.cart:focus small { color: inherit; }
+.btn.cart.inserting { animation: cartIn .45s cubic-bezier(.5,0,.8,.3) forwards; }
+@keyframes cartIn { to { transform: translateY(-60px) scale(.9); opacity: 0; } }
+@media (max-width: 680px) { .btn.cart { width: min(240px, 72vw); } .btn.cart .shell { padding: 30px 18px 40px; } .btn.cart .label .face { width: 80px; height: 96px; } }
