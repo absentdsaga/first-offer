@@ -64,15 +64,15 @@ button:focus-visible, input:focus-visible { outline: 3px solid #fff; outline-off
 .carts { display: flex; gap: 18px; flex-wrap: wrap; justify-content: center; }
 .cart { width: min(320px, 86vw); min-height: 180px; padding: 18px 14px; display: flex; flex-direction: column;
   gap: 10px; align-items: center; justify-content: center; }
-.cart .face { width: 120px; height: 148px; }
-.cart .face svg { width: 100%; height: 100%; }
+.cart .face { width: 120px; height: 148px; display: flex; align-items: flex-end; justify-content: center; }
+.cart .face svg { height: 100%; width: auto; }
 .cart small { font-size: 8px; color: var(--dim); line-height: 1.7; }
 .cart:hover small, .cart:focus small { color: #1a1008; }
 .gauntlet { width: min(680px, 92vw); border-color: var(--green); }
 .bossGrid { display: grid; grid-template-columns: repeat(3, minmax(0, 220px)); gap: 14px; width: min(720px, 96vw); justify-content: center; }
 .bossCard { min-height: 168px; padding: 10px 8px; display: flex; flex-direction: column; align-items: center; gap: 8px; font-size: 9px; line-height: 1.55; }
-.bossCard .face { width: 110px; height: 132px; }
-.bossCard .face svg { width: 100%; height: 100%; }
+.bossCard .face { width: 110px; height: 132px; display: flex; align-items: flex-end; justify-content: center; }
+.bossCard .face svg { height: 100%; width: auto; }
 .bossCard .nm { color: var(--gold); }
 .bossCard.final { border-color: var(--red); box-shadow: 4px 4px 0 #000, 0 0 18px rgba(225,6,0,.45); }
 .bossCard.final .nm { color: #fff; }
@@ -83,8 +83,8 @@ button:focus-visible, input:focus-visible { outline: 3px solid #fff; outline-off
 .side { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 .who { display: flex; align-items: center; gap: 8px; font-size: clamp(8px, 1.2vw, 11px); line-height: 1.45; }
 .side.right .who { justify-content: flex-end; text-align: right; }
-.mini { width: 42px; height: 48px; flex: 0 0 auto; }
-.mini svg { width: 100%; height: 100%; }
+.mini { width: 42px; height: 52px; flex: 0 0 auto; display: flex; align-items: flex-end; justify-content: center; }
+.mini svg { height: 100%; width: auto; }
 .sub { color: var(--dim); font-size: 8px; }
 .bar { position: relative; height: clamp(16px, 2.4vw, 22px); background: #4a0610; border: 3px solid var(--gold);
   box-shadow: 0 0 0 3px #000; overflow: hidden; }
@@ -128,7 +128,7 @@ button:focus-visible, input:focus-visible { outline: 3px solid #fff; outline-off
 .actor { width: min(100%, 300px); flex: 1 1 auto; min-height: 120px; display: flex; align-items: flex-end; justify-content: center; position: relative; }
 .bob, .flip, .sprite { width: 100%; height: 100%; display: flex; align-items: flex-end; justify-content: center; }
 .bob { animation: idle .5s steps(2, end) infinite; transform-origin: 50% 100%; }
-.actor .pix { height: 100%; width: auto; max-width: 100%; display: block; overflow: visible; }
+.actor .pix, .cut .pix { height: 100%; width: auto; max-width: 100%; display: block; image-rendering: pixelated; image-rendering: crisp-edges; }
 .actor.boss .flip { transform: scaleX(-1); }
 .actor.hurt .bob { animation: hurtP .38s linear; }
 .actor.boss.hurt .bob { animation: hurtB .38s linear; }
@@ -139,14 +139,61 @@ button:focus-visible, input:focus-visible { outline: 3px solid #fff; outline-off
 @keyframes hurtB { 0% { transform: translateX(0); filter: brightness(2.4); } 40% { transform: translateX(16px); } 100% { transform: translateX(0); } }
 @keyframes lungeR { 0% { transform: translateX(0); } 45% { transform: translateX(22px); } 100% { transform: translateX(0); } }
 @keyframes lungeL { 0% { transform: translateX(0); } 45% { transform: translateX(-22px); } 100% { transform: translateX(0); } }
-.pix path, .pix circle, .pix rect, .pix ellipse { stroke: #f3e2bc; stroke-width: 3.5px; stroke-linejoin: round; paint-order: stroke fill; }
-.pix .sh { stroke: none; fill: rgba(0,0,0,.35); }
+.pix { shape-rendering: crispEdges; }
 .actor.boss.final .bob { filter: drop-shadow(0 0 12px rgba(225,6,0,.75)); }
 .actor.think .bob { filter: brightness(1.35) drop-shadow(0 0 10px #fff); }
 .actor.think::before { content: "..."; position: absolute; top: 0; left: 50%; transform: translateX(-50%);
   background: #fff; color: #000; font-size: 12px; padding: 5px 7px; border: 3px solid #000; z-index: 4; }
 
 #fx { position: absolute; inset: 0; z-index: 5; pointer-events: none; }
+.cut { position: absolute; inset: 0; z-index: 8; overflow: hidden; pointer-events: none;
+  background: radial-gradient(circle at 42% 46%, #4a1424 0%, #07060a 68%); }
+.cut.bad { background: radial-gradient(circle at 58% 46%, #4a1018 0%, #07060a 68%); }
+.cut .lines { position: absolute; inset: -20%;
+  background: repeating-linear-gradient(-18deg, transparent 0 14px, rgba(255,255,255,.06) 14px 16px);
+  animation: cutlines .35s linear infinite; }
+@keyframes cutlines { to { transform: translateX(-32px); } }
+.cut::before, .cut::after { content: ""; position: absolute; left: 0; right: 0; height: 8%; background: #000; z-index: 3; }
+.cut::before { top: 0; } .cut::after { bottom: 0; }
+.cut-stage { position: absolute; left: 2%; right: 2%; top: 10%; bottom: 16%; }
+.cut .fighter { position: absolute; bottom: 0; height: 100%; width: 48%; display: flex; align-items: flex-end; }
+.cut .fighter.atk { left: -2%; width: 74%; justify-content: flex-start; z-index: 2; }
+.cut .fighter.def { right: -4%; width: 56%; justify-content: flex-end; z-index: 1; }
+.cut .fighter .hold { height: 100%; display: flex; align-items: flex-end; }
+.cut .fighter .flip { height: 100%; display: flex; align-items: flex-end; transform: scaleX(-1); }
+.cut.go .fighter.atk { animation: cutLunge .4s linear forwards; }
+.cut.impact .fighter.atk { animation: none; transform: translateX(70%); }
+.cut.impact .fighter.def { animation: cutSnap .28s linear forwards; }
+@keyframes cutLunge {
+  0% { transform: translateX(-12%); }
+  100% { transform: translateX(70%); }
+}
+@keyframes cutSnap {
+  0% { transform: translateX(0); filter: brightness(3); }
+  100% { transform: translateX(10%); filter: none; }
+}
+.cut .boom { position: absolute; left: 78%; top: 27%; width: 120px; height: 120px; margin: -60px 0 0 -60px; opacity: 0; z-index: 4;
+  background:
+    linear-gradient(#fff, #fff) center / 14px 100% no-repeat,
+    linear-gradient(#fff, #fff) center / 100% 14px no-repeat,
+    linear-gradient(#ffe14a, #ffe14a) center / 8px 78% no-repeat,
+    linear-gradient(#ffe14a, #ffe14a) center / 78% 8px no-repeat;
+  transform: rotate(18deg) scale(.2); }
+.cut.bad .boom { filter: hue-rotate(-30deg) saturate(1.4); }
+.cut.impact .boom { animation: boomIn .42s linear forwards; }
+@keyframes boomIn {
+  0% { opacity: 1; transform: rotate(18deg) scale(.25); }
+  45% { opacity: 1; transform: rotate(18deg) scale(1.4); }
+  100% { opacity: 1; transform: rotate(26deg) scale(1); }
+}
+.cut .flash { position: absolute; inset: 0; background: #fff; opacity: 0; z-index: 4; }
+.cut.impact .flash { animation: cutflash .28s linear; }
+@keyframes cutflash { 0% { opacity: .9; } 100% { opacity: 0; } }
+.cut-call { position: absolute; left: 4%; right: 4%; bottom: 9%; z-index: 5; text-align: center;
+  font-size: clamp(13px, 2.5vw, 28px); line-height: 1.35; color: var(--gold);
+  text-shadow: 3px 3px 0 #000, -2px 0 var(--red); }
+.cut.bad .cut-call { color: #ff5a5a; text-shadow: 3px 3px 0 #000; }
+.cut-call small { display: block; margin-top: 4px; font-size: .55em; color: #fff; text-shadow: 2px 2px 0 #000; }
 .shout { position: absolute; left: 50%; top: 42%; transform: translate(-50%, -50%); text-align: center; max-width: 86%;
   font-size: clamp(16px, 3.6vw, 42px); line-height: 1.35; color: var(--gold);
   text-shadow: 4px 4px 0 #000, -2px 0 var(--red); animation: shout 1.45s forwards; }
@@ -329,6 +376,16 @@ body.nocoach .coach { display: none !important; }
       <div class="actor boss" id="bossActor"><div class="bob"><div class="flip"><div class="sprite" id="bossSprite"></div></div></div></div>
     </div>
     <div id="fx"></div>
+    <div id="cut" class="cut hidden">
+      <div class="lines"></div>
+      <div class="cut-stage">
+        <div class="fighter atk" id="cutAtk"></div>
+        <div class="fighter def" id="cutDef"></div>
+        <div class="boom"></div>
+      </div>
+      <div class="flash"></div>
+      <div class="cut-call" id="cutCall"></div>
+    </div>
   </div>
   <div class="controls">
     <button id="micBtn" class="btn" type="button" aria-pressed="false">PUSH TO TALK</button>
@@ -393,15 +450,6 @@ body.nocoach .coach { display: none !important; }
   var $ = function (id) { return document.getElementById(id); };
   if (/[?&]offline=(1|true)/.test(location.search)) F.config.offline = true;
 
-  var LOOK = {
-    you: { jacket: '#d0122d', shirt: '#f7f7f7', tie: '#f2d15a', pants: '#16181f', shoe: '#f4f4f4', hair: '#1a120c', skin: '#f0c09a', mood: 'angry' },
-    dealer: { jacket: '#e7c27a', shirt: '#ff4f93', tie: '', pants: '#2c241c', shoe: '#6b3a22', hair: '#4a2e18', skin: '#e7b48c', glasses: 1, chain: 1, pomp: 1, mood: 'smirk' },
-    landlord: { jacket: '#6e5b48', shirt: '#e7d7c3', tie: '#8a3b2a', pants: '#3a342e', shoe: '#2a2420', hair: '#d8d8d8', skin: '#e8c3a6', bald: 1, mustache: 1, prop: 'keys', mood: 'angry' },
-    recruiter: { jacket: '#3a4260', shirt: '#f7f7f7', tie: '#e10600', pants: '#23283a', shoe: '#d9d3c7', hair: '#1a1c24', skin: '#f3d2b8', mood: 'angry', prop: 'clipboard' },
-    vendor: { jacket: '#f3e2b8', shirt: '#fffaf0', tie: '', pants: '#5a4632', shoe: '#6b4a2a', hair: '#1a120c', skin: '#e0a878', hat: 'straw', apron: '#2f8f4e', prop: 'orange', mood: 'smirk' },
-    taxi: { jacket: '#f5d400', shirt: '#fff6cc', tie: '', pants: '#1a1a1a', shoe: '#111', hair: '#1a120c', skin: '#e8b892', hat: 'cap', mood: 'smirk' },
-    jefe: { jacket: '#2c4068', shirt: '#f7f7f7', tie: '#d4af37', pants: '#1c2838', shoe: '#e4dccb', hair: '#d5d5d5', skin: '#efd0b4', mood: 'angry' }
-  };
   var CAST = { negotiate: ['dealer', 'landlord', 'recruiter'], espanol: ['vendor', 'taxi', 'jefe'] };
   var DEMO = {
     negotiate: [
@@ -415,70 +463,181 @@ body.nocoach .coach { display: none !important; }
       'Quiero trabajar aquí porque tengo experiencia y hablo español.'
     ]
   };
-
-  function markup(o) {
-    var skin = o.skin, hair = o.hair, jacket = o.jacket, shirt = o.shirt || '#fff';
-    var tie = o.tie, pants = o.pants, shoe = o.shoe, p = [];
-    p.push('<svg class="pix" viewBox="0 0 210 270" aria-hidden="true">');
-    p.push('<ellipse class="sh" cx="104" cy="256" rx="54" ry="10"/>');
-    p.push('<path d="M78 158 L66 214 L96 220 L106 162 Z" fill="' + pants + '"/>');
-    p.push('<path d="M62 210 L100 220 L104 234 L58 226 Z" fill="' + shoe + '"/>');
-    p.push('<path d="M114 162 L126 216 L158 220 L142 162 Z" fill="' + pants + '"/>');
-    p.push('<path d="M120 212 L162 222 L166 236 L116 228 Z" fill="' + shoe + '"/>');
-    p.push('<path d="M70 112 L56 168 L148 168 L156 116 L128 98 L78 98 Z" fill="' + jacket + '"/>');
-    p.push('<path d="M94 104 L116 104 L120 150 L90 150 Z" fill="' + shirt + '"/>');
-    if (tie) p.push('<path d="M98 106 L114 106 L106 148 Z" fill="' + tie + '"/>');
-    if (o.apron) p.push('<path d="M88 120 H124 L118 176 H94 Z" fill="' + o.apron + '"/>');
-    p.push('<circle cx="106" cy="74" r="32" fill="' + skin + '"/>');
-    p.push('<circle cx="76" cy="78" r="7" fill="' + skin + '"/>');
-    if (o.hat === 'cap') {
-      p.push('<path d="M64 66 H158 L152 80 H74 Z" fill="' + hair + '"/>');
-      p.push('<path d="M78 66 H136 L130 42 H88 Z" fill="' + hair + '"/>');
-    } else if (o.hat === 'straw') {
-      p.push('<ellipse cx="108" cy="60" rx="50" ry="11" fill="#e6c15a"/>');
-      p.push('<path d="M88 60 H132 L124 34 H96 Z" fill="#f0d48a"/>');
-    } else if (o.bald) {
-      p.push('<path d="M78 84 Q74 52 108 48 Q140 52 136 78 L128 64 Q108 56 86 66 Z" fill="' + hair + '"/>');
-    } else if (o.pomp) {
-      p.push('<path d="M70 74 Q80 16 124 28 Q162 42 146 78 L132 58 Q110 38 82 56 Z" fill="' + hair + '"/>');
-    } else {
-      p.push('<path d="M76 70 Q80 30 114 32 Q150 38 142 76 L130 54 Q106 42 84 56 Z" fill="' + hair + '"/>');
+  var SPRITE_CACHE = {};
+  function sprite(kind, pose) {
+    pose = pose || 'idle';
+    var cacheKey = kind + '|' + pose;
+    if (SPRITE_CACHE[cacheKey]) return SPRITE_CACHE[cacheKey];
+    var W = 64, H = 80, g = [], y, x;
+    for (y = 0; y < H; y++) { g[y] = []; for (x = 0; x < W; x++) g[y][x] = ''; }
+    function rect(x0, y0, w, h, c) {
+      var yy, xx;
+      for (yy = y0; yy < y0 + h; yy++) {
+        if (yy < 0 || yy >= H) continue;
+        for (xx = x0; xx < x0 + w; xx++) if (xx >= 0 && xx < W) g[yy][xx] = c;
+      }
     }
-    if (o.glasses) {
-      p.push('<rect x="84" y="68" width="20" height="14" rx="2" fill="#141414"/>');
-      p.push('<rect x="114" y="68" width="20" height="14" rx="2" fill="#141414"/>');
-      p.push('<path d="M104 75 H114 M74 75 H84 M134 75 H146" fill="none" stroke="#141414" stroke-width="3"/>');
+    var top, top2, pants, pants2, glove, shoe, hair, hair2, band = '';
+    var SKIN = '#f0b48a', SKIN2 = '#d4926a', HAIR = '#160e0c', HAIR2 = '#3a2418';
+    var WHITE = '#f7f4ee', W2 = '#d2cec4', GI2 = '#b0bac6', RED = '#d0122d', BELT = '#1c1820';
+    var FOOT = '#e8c4a8', GOLD = '#e6b325', PINK = '#ff4f93', SHIRT = '#f7f7f7';
+    var INK = '#10080c';
+    if (kind === 'gi') {
+      top = WHITE; top2 = GI2; pants = WHITE; pants2 = W2; glove = RED; shoe = FOOT; hair = HAIR; hair2 = HAIR2; band = RED;
+    } else if (kind === 'dealer') {
+      top = '#e7c27a'; top2 = '#b8924e'; pants = '#30261e'; pants2 = '#1e1812'; glove = SKIN; shoe = '#603e24'; hair = '#56341c'; hair2 = '#341e10';
+    } else if (kind === 'landlord') {
+      top = '#6e5b48'; top2 = '#4a3b2e'; pants = '#3e3630'; pants2 = '#28221e'; glove = SKIN; shoe = '#302822'; hair = '#dcdcdc'; hair2 = '#a0a0a0';
+    } else if (kind === 'recruiter') {
+      top = '#1c223a'; top2 = '#101424'; pants = '#0e1018'; pants2 = '#080a10'; glove = SKIN; shoe = '#e6e0d2'; hair = '#0a0a0e'; hair2 = '#24242c';
+    } else if (kind === 'vendor') {
+      top = '#ecd6a8'; top2 = '#c4a46e'; pants = '#5c4630'; pants2 = '#3e2e20'; glove = SKIN; shoe = '#6e4a2a'; hair = HAIR; hair2 = HAIR2;
+    } else if (kind === 'taxi') {
+      top = '#f5d400'; top2 = '#c4a000'; pants = '#161616'; pants2 = '#0a0a0a'; glove = SKIN; shoe = '#101010'; hair = HAIR; hair2 = HAIR2;
     } else {
-      p.push('<rect x="90" y="70" width="9" height="7" fill="#1a120c"/>');
-      p.push('<rect x="118" y="70" width="9" height="7" fill="#1a120c"/>');
+      top = '#243860'; top2 = '#162440'; pants = '#0e141e'; pants2 = '#080c12'; glove = SKIN; shoe = '#e2dac8'; hair = '#d2d2d2'; hair2 = '#8c8c8c';
     }
-    if (o.mood === 'angry') p.push('<path d="M84 62 L102 70 M132 62 L114 70" fill="none" stroke="#1a120c" stroke-width="3"/>');
-    else p.push('<path d="M88 64 H104 M116 64 H132" fill="none" stroke="#1a120c" stroke-width="3"/>');
-    if (o.mustache) p.push('<path d="M90 90 Q108 102 L128 90 Q108 96 90 90 Z" fill="#4a3428"/>');
-    if (o.mood === 'smirk') p.push('<path d="M96 96 Q108 106 L124 94" fill="none" stroke="#7a3040" stroke-width="3"/>');
-    else p.push('<path d="M98 98 H120" fill="none" stroke="#7a3040" stroke-width="3"/>');
-    p.push('<path d="M140 122 L186 96 L196 116 L150 146 Z" fill="' + jacket + '"/>');
-    p.push('<circle cx="190" cy="104" r="13" fill="' + skin + '"/>');
-    p.push('<path d="M74 122 L46 150 L58 164 L88 134 Z" fill="' + jacket + '"/>');
-    p.push('<circle cx="48" cy="158" r="11" fill="' + skin + '"/>');
-    if (o.chain) p.push('<path d="M94 118 Q108 136 124 118" fill="none" stroke="#e6b325" stroke-width="4"/>');
-    if (o.prop === 'keys') p.push('<circle cx="70" cy="176" r="6" fill="#e6b325"/><path d="M70 176 H92" stroke="#e6b325" stroke-width="3" fill="none"/>');
-    if (o.prop === 'orange') p.push('<circle cx="48" cy="158" r="16" fill="#ff8a1e"/>');
-    if (o.prop === 'clipboard') p.push('<rect x="168" y="70" width="24" height="32" rx="2" fill="#f4f1e8"/><rect x="172" y="76" width="16" height="3" fill="#222"/><rect x="172" y="84" width="16" height="3" fill="#222"/>');
-    p.push('</svg>');
-    return p.join('');
+    var lean = pose === 'punch' ? 4 : pose === 'hurt' ? -3 : 0;
+    var wide = (kind === 'landlord') ? 3 : 0;
+    var hand = kind === 'gi' ? glove : SKIN;
+    rect(6 + lean, 50, 9, 8, pants2);
+    rect(4 + lean, 56, 8, 12, pants2);
+    rect(3 + lean, 66, 12, 5, kind === 'gi' ? FOOT : shoe);
+    rect(26 + lean, 48, 10, 10, pants);
+    rect(30 + lean, 56, 8, 12, pants);
+    rect(30 + lean, 66, 13, 5, kind === 'gi' ? FOOT : shoe);
+    rect(14 + lean - wide, 44, 20 + wide * 2, 8, pants2);
+    rect(16 + lean - wide, 44, 16 + wide * 2, 7, pants);
+    if (kind === 'gi') { rect(16 + lean, 44, 16, 3, BELT); rect(22 + lean, 44, 3, 4, RED); }
+    else rect(16 + lean, 43, 16, 3, top2);
+    rect(14 + lean - wide, 26, 18 + wide * 2, 20, top2);
+    rect(18 + lean - wide, 26, 14 + wide, 19, top);
+    rect(28 + lean, 26, 6, 8, top);
+    rect(12 + lean - wide, 28, 5, 8, top2);
+    rect(20 + lean, 22, 7, 6, SKIN2);
+    if (pose === 'hurt') {
+      rect(8 + lean, 36, 6, 12, top2);
+      rect(6 + lean, 46, 7, 7, hand);
+      rect(30 + lean, 38, 6, 12, top);
+      rect(34 + lean, 48, 7, 7, hand);
+    } else if (pose === 'punch') {
+      rect(8 + lean, 36, 8, 6, top2);
+      rect(4 + lean, 38, 8, 8, hand);
+      rect(28 + lean, 16, 20, 5, top);
+      rect(46 + lean, 12, 12, 12, hand);
+      if (kind === 'gi') rect(54 + lean, 16, 2, 4, '#ffdcc8');
+    } else {
+      rect(10 + lean, 24, 7, 8, top2);
+      rect(6 + lean, 20, 8, 8, hand);
+      rect(30 + lean, 28, 10, 6, top);
+      rect(38 + lean, 26, 9, 9, hand);
+    }
+    var hx = 18 + lean + (pose === 'hurt' ? -4 : 0);
+    var hy = 4 + (pose === 'hurt' ? -2 : 0);
+    rect(hx + 1, hy + 2, 16, 16, SKIN2);
+    rect(hx + 2, hy + 3, 14, 14, SKIN);
+    rect(hx, hy + 8, 3, 4, SKIN2);
+    var hat = kind === 'vendor' ? 'straw' : kind === 'taxi' ? 'cap' : '';
+    var bald = kind === 'landlord';
+    if (hat === 'straw') {
+      rect(hx - 3, hy + 6, 22, 3, '#e6c15a');
+      rect(hx + 3, hy, 12, 7, '#f0d278');
+    } else if (hat === 'cap') {
+      rect(hx + 1, hy + 1, 16, 5, hair);
+      rect(hx - 2, hy + 5, 20, 3, hair);
+    } else if (bald) {
+      rect(hx + 1, hy + 8, 3, 7, hair2);
+      rect(hx + 13, hy + 10, 3, 5, hair2);
+      rect(hx + 4, hy + 2, 10, 3, SKIN2);
+      rect(hx + 6, hy + 3, 4, 1, '#ffe6d2');
+    } else {
+      rect(hx + 2, hy, 14, 6, hair);
+      rect(hx + 1, hy + 4, 5, 10, hair);
+      if (kind === 'gi') {
+        rect(hx + 6, hy - 2, 3, 3, hair);
+        rect(hx + 10, hy - 3, 3, 4, hair);
+        rect(hx + 4, hy + 6, 13, 2, band);
+        rect(hx + 15, hy + 7, 4, 2, band);
+      }
+      if (kind === 'dealer') rect(hx + 8, hy - 3, 10, 5, hair2);
+      if (kind === 'recruiter' || kind === 'jefe') rect(hx + 4, hy + 1, 12, 2, hair2);
+    }
+    var eyeY = hy + 9;
+    if (pose === 'hurt') {
+      rect(hx + 5, eyeY + 1, 4, 1, INK);
+      rect(hx + 11, eyeY + 1, 4, 1, INK);
+      rect(hx + 7, hy + 15, 5, 2, '#b03030');
+      rect(hx + 14, hy + 6, 2, 2, '#ffffff');
+    } else {
+      rect(hx + 5, eyeY, 4, 3, '#fafafa');
+      rect(hx + 11, eyeY, 4, 3, '#fafafa');
+      rect(hx + 7, eyeY, 2, 3, INK);
+      rect(hx + 13, eyeY, 2, 3, INK);
+      rect(hx + 4, eyeY - 2, 5, 1, INK);
+      rect(hx + 5, eyeY - 3, 3, 1, INK);
+      rect(hx + 11, eyeY - 2, 5, 1, INK);
+      rect(hx + 12, eyeY - 3, 3, 1, INK);
+      rect(hx + 8, hy + 15, 4, 1, '#965046');
+    }
+    if (kind === 'dealer') {
+      rect(hx + 4, eyeY - 1, 6, 5, '#0c0c0c');
+      rect(hx + 11, eyeY - 1, 6, 5, '#0c0c0c');
+      rect(hx + 10, eyeY + 1, 1, 1, '#0c0c0c');
+      rect(hx + 6, eyeY, 2, 2, '#b4c8dc');
+    }
+    if (kind === 'landlord') {
+      rect(hx + 5, hy + 14, 9, 2, '#4a3424');
+      rect(hx + 4, hy + 15, 2, 2, '#4a3424');
+    }
+    if (kind === 'gi') rect(20 + lean, 30, 6, 8, '#e6505a');
+    if (kind === 'recruiter' || kind === 'jefe' || kind === 'dealer' || kind === 'landlord') {
+      var tie = kind === 'recruiter' ? RED : kind === 'jefe' ? GOLD : kind === 'dealer' ? PINK : '#964030';
+      var shirt = kind === 'dealer' ? PINK : SHIRT;
+      rect(20 + lean, 28, 8, 4, shirt);
+      rect(22 + lean, 30, 4, 12, tie);
+    }
+    if (kind === 'dealer') { rect(20 + lean, 36, 10, 1, GOLD); rect(22 + lean, 37, 6, 1, GOLD); }
+    if (kind === 'vendor') {
+      rect(18 + lean, 34, 14, 12, '#2f8f4e');
+      rect(40 + lean, 40, 5, 5, '#ff8a1e');
+    }
+    if (kind === 'landlord') { rect(8 + lean, 48, 3, 3, GOLD); rect(8 + lean, 51, 6, 1, GOLD); }
+    var add = [], dy, dx, yy, xx;
+    for (y = 0; y < H; y++) for (x = 0; x < W; x++) if (g[y][x]) {
+      for (dy = -1; dy <= 1; dy++) for (dx = -1; dx <= 1; dx++) {
+        yy = y + dy; xx = x + dx;
+        if (yy >= 0 && xx >= 0 && yy < H && xx < W && !g[yy][xx]) add.push([xx, yy]);
+      }
+    }
+    for (y = 0; y < add.length; y++) if (!g[add[y][1]][add[y][0]]) g[add[y][1]][add[y][0]] = INK;
+    var parts = ['<svg class="pix" viewBox="0 0 64 80" shape-rendering="crispEdges" aria-hidden="true">'];
+    for (y = 0; y < H; y++) {
+      x = 0;
+      while (x < W) {
+        var col = g[y][x];
+        if (!col) { x++; continue; }
+        var x0 = x;
+        while (x < W && g[y][x] === col) x++;
+        parts.push('<rect x="' + x0 + '" y="' + y + '" width="' + (x - x0) + '" height="1" fill="' + col + '"/>');
+      }
+    }
+    parts.push('</svg>');
+    SPRITE_CACHE[cacheKey] = parts.join('');
+    return SPRITE_CACHE[cacheKey];
   }
+
 
   var G = {
     cart: null, boss: 0, shown: 0, over: false, final: false,
     gauntlet: false, pitchEnd: false, micWasOn: false, hits: [], ledger: [],
     lastBoss: '', time: 99, timerOn: false
   };
-  var hitQueue = [], hitTimer = null, typeTimer = null, clock = null, valueToken = 0, roundId = 0;
+  var hitQueue = [], hitTimer = null, typeTimer = null, clock = null, valueToken = 0, roundId = 0, cutGen = 0;
+  var CUT_MS = 1200;
   var hp = { boss: 100, player: 100 };
 
   function cart() { return CARTS[G.cart]; }
-  function look(cartId, i) { return LOOK[(CAST[cartId] || CAST.negotiate)[i] || 'recruiter']; }
+  function castKey(cartId, i) { return (CAST[cartId] || CAST.negotiate)[i] || 'recruiter'; }
   function isFinalIndex(i) { return i >= cart().bosses.length - 1; }
   function dollars() { return cart() && cart().valueMode === 'dollars'; }
   function formatValue(v) {
@@ -628,10 +787,10 @@ body.nocoach .coach { display: none !important; }
   $('pressStart').addEventListener('click', pressStart);
   $('title').addEventListener('click', function (e) { if (e.target === $('title')) pressStart(); });
 
-  $('cartFaceN').innerHTML = markup(LOOK.you);
-  $('cartFaceS').innerHTML = markup(LOOK.vendor);
-  $('playerSprite').innerHTML = markup(LOOK.you);
-  $('playerMini').innerHTML = markup(LOOK.you);
+  $('cartFaceN').innerHTML = sprite('gi', 'idle');
+  $('cartFaceS').innerHTML = sprite('vendor', 'idle');
+  $('playerSprite').innerHTML = sprite('gi', 'idle');
+  $('playerMini').innerHTML = sprite('gi', 'idle');
 
   document.querySelectorAll('[data-cart]').forEach(function (b) {
     b.addEventListener('click', function () {
@@ -651,7 +810,7 @@ body.nocoach .coach { display: none !important; }
       card.className = 'btn bossCard' + (i === cart().bosses.length - 1 ? ' final' : '');
       var face = document.createElement('div');
       face.className = 'face';
-      face.innerHTML = markup(look(G.cart, i));
+      face.innerHTML = sprite(castKey(G.cart, i), 'idle');
       var nm = document.createElement('div');
       nm.className = 'nm';
       nm.textContent = b.name.toUpperCase();
@@ -762,6 +921,8 @@ body.nocoach .coach { display: none !important; }
     hitQueue = [];
     clearTimeout(hitTimer); hitTimer = null;
     clearInterval(typeTimer);
+    cutGen++;
+    $('cut').className = 'cut hidden';
     clearFx();
     $('bossName').textContent = b.name.toUpperCase();
     $('dialogWho').textContent = b.name.toUpperCase();
@@ -769,8 +930,8 @@ body.nocoach .coach { display: none !important; }
     $('roundLabel').textContent = G.final ? 'FINAL' : ('ROUND ' + (i + 1));
     $('valueCap').textContent = caption(i);
     $('valueNum').textContent = formatValue(0);
-    $('bossSprite').innerHTML = markup(look(G.cart, i));
-    $('bossMini').innerHTML = markup(look(G.cart, i));
+    $('bossSprite').innerHTML = sprite(castKey(G.cart, i), 'idle');
+    $('bossMini').innerHTML = sprite(castKey(G.cart, i), 'idle');
     $('bossActor').classList.toggle('final', G.final);
     $('bossActor').classList.remove('think', 'hurt', 'attack');
     $('playerActor').classList.remove('hurt', 'attack');
@@ -869,41 +1030,46 @@ body.nocoach .coach { display: none !important; }
   });
   $('bossBubble').title = 'Click to finish the line';
 
+  function showCut(h, onBoss, token, round) {
+    var atk = onBoss ? 'gi' : castKey(G.cart, G.boss);
+    var def = onBoss ? castKey(G.cart, G.boss) : 'gi';
+    var name = String(h.move || 'HIT').toUpperCase();
+    var flex = /flex/i.test(name);
+    var cut = $('cut');
+    $('cutAtk').innerHTML = '<div class="hold">' + sprite(atk, 'punch') + '</div>';
+    $('cutDef').innerHTML = '<div class="flip"><div class="hold">' + sprite(def, 'idle') + '</div></div>';
+    $('cutCall').textContent = name;
+    var sub = document.createElement('small');
+    sub.textContent = onBoss ? ('HIT  -' + h.dmg) : (flex ? 'CRITICAL — ON YOU' : ('HITS YOU  -' + h.dmg));
+    $('cutCall').appendChild(sub);
+    cut.className = 'cut go' + (onBoss ? '' : ' bad');
+    setTimeout(function () {
+      if (token !== cutGen || round !== roundId) return;
+      $('cutDef').innerHTML = '<div class="flip"><div class="hold">' + sprite(def, 'hurt') + '</div></div>';
+      cut.classList.add('impact');
+      pose(onBoss ? 'bossActor' : 'playerActor', 'hurt');
+      pose(onBoss ? 'playerActor' : 'bossActor', 'attack');
+      var key = onBoss ? 'boss' : 'player';
+      hp[key] = Math.max(0, hp[key] - (Number(h.dmg) || 0));
+      setBar(onBoss ? 'bossBar' : 'playerBar', hp[key]);
+      var fight = $('fight');
+      fight.classList.remove('shake', 'redflash');
+      void fight.offsetWidth;
+      fight.classList.add('shake');
+      if (!onBoss) fight.classList.add('redflash');
+      setTimeout(function () { fight.classList.remove('shake', 'redflash'); }, 380);
+      sfx(!onBoss ? 'hurt' : (h.dmg >= 15 ? 'crit' : 'hit'));
+    }, 420);
+    setTimeout(function () {
+      if (token !== cutGen || round !== roundId) return;
+      cut.className = 'cut hidden';
+    }, CUT_MS - 80);
+  }
   function playNextHit() {
     var h = hitQueue.shift();
     if (!h) { hitTimer = null; return; }
-    var onBoss = h.target !== 'player';
-    var name = String(h.move || 'HIT').toUpperCase();
-    var flex = /flex/i.test(name);
-    var shout = document.createElement('div');
-    shout.className = 'shout' + (onBoss ? '' : ' bad') + (flex || (!onBoss && h.dmg >= 15) ? ' crit' : '');
-    shout.textContent = name;
-    var sub = document.createElement('small');
-    sub.textContent = onBoss ? ('HIT  -' + h.dmg) : (flex ? 'CRITICAL — ON YOU' : ('HITS YOU  -' + h.dmg));
-    shout.appendChild(sub);
-    $('fx').appendChild(shout);
-    setTimeout(function () { if (shout.parentNode) shout.remove(); }, 1450);
-    var actor = onBoss ? $('bossActor') : $('playerActor');
-    pose(onBoss ? 'bossActor' : 'playerActor', 'hurt');
-    var spark = document.createElement('div');
-    spark.className = 'spark' + (onBoss ? '' : ' bad');
-    actor.appendChild(spark);
-    var dmg = document.createElement('div');
-    dmg.className = 'dmg';
-    dmg.textContent = '-' + h.dmg;
-    actor.appendChild(dmg);
-    setTimeout(function () { if (spark.parentNode) spark.remove(); if (dmg.parentNode) dmg.remove(); }, 900);
-    var fight = $('fight');
-    fight.classList.remove('shake', 'redflash');
-    void fight.offsetWidth;
-    fight.classList.add('shake');
-    if (!onBoss) fight.classList.add('redflash');
-    setTimeout(function () { fight.classList.remove('shake', 'redflash'); }, 380);
-    var key = onBoss ? 'boss' : 'player';
-    hp[key] = Math.max(0, hp[key] - (Number(h.dmg) || 0));
-    setBar(onBoss ? 'bossBar' : 'playerBar', hp[key]);
-    sfx(!onBoss ? 'hurt' : (h.dmg >= 15 ? 'crit' : 'hit'));
-    hitTimer = setTimeout(playNextHit, 1000);
+    showCut(h, h.target !== 'player', ++cutGen, roundId);
+    hitTimer = setTimeout(playNextHit, CUT_MS);
   }
 
   function splitTip(summary) {
@@ -1003,7 +1169,7 @@ body.nocoach .coach { display: none !important; }
   });
   F.on('score', function (e) {
     var token = roundId;
-    var wait = (hitQueue.length + (hitTimer ? 1 : 0)) * 1000;
+    var wait = (hitQueue.length + (hitTimer ? 1 : 0)) * CUT_MS;
     setTimeout(function () {
       if (token !== roundId) return;
       hp.boss = e.bossHP;
@@ -1042,7 +1208,7 @@ body.nocoach .coach { display: none !important; }
     var win = e.winner === 'player';
     var last = isFinalIndex(G.boss);
     var pending = hitQueue.length + (hitTimer ? 1 : 0);
-    var wait = Math.max(600, pending * 1000);
+    var wait = Math.max(CUT_MS, pending * CUT_MS);
     setTimeout(function () {
       if (win && G.gauntlet && !pitch && !last) {
         banner('YOU WIN', formatValue(e.value));
