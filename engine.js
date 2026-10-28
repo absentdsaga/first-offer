@@ -1,4 +1,5 @@
-/* FIRST OFFER voice + scoring engine. Plain browser JS, no build. Exposes window.FirstOffer. */
+/* FIRST OFFER voice + scoring engine. Plain browser JS, no build. Exposes window.FirstOffer.
+   forceEnd(winner) ends the open round at once for the pitch key. winner is 'player', 'boss', or omitted (higher HP wins). */
 (function () {
   'use strict';
   var config = { url: 'https://dioni.zo.space/api/first-offer', timeoutMs: 8000, offline: false, retryAfterMs: 30000,
@@ -319,8 +320,32 @@
     try { if (S) rec.lang = S.cart.lang; rec.start(); recRunning = true; } catch (e) { /* already started */ }
   }
 
+  // Pitch/rehearsal only. Drops any score still in flight so a late reply cannot reopen the round.
+  function forceEnd(winner) {
+    if (!S || S.over) return false;
+    gen++;
+    S.busy = false;
+    S.queued = null;
+    S.over = true;
+    if (winner !== 'player' && winner !== 'boss') winner = S.playerHP > S.bossHP ? 'player' : 'boss';
+    if (winner === 'player') S.bossHP = 0; else S.playerHP = 0;
+    if (window.speechSynthesis) { try { speechSynthesis.cancel(); } catch (e) {} }
+    bossTalking = false;
+    clearTimeout(talkTimer);
+    emit('thinking', { on: false });
+    emit('interim', { text: '' });
+    emit('score', { bossHP: S.bossHP, playerHP: S.playerHP, value: S.value, tip: '', offline: !!(config.offline || Date.now() < remoteDownUntil) });
+    var unit = S.cart.valueMode === 'dollars' ? '$' + S.value.toLocaleString() + ' above the first offer' : S.value + ' ' + (S.cart.valueLabel || 'points');
+    var summary = (winner === 'player' ? 'K.O.! You beat ' : 'K.O.! You lost to ') + S.boss.name + ': ' + unit + '.';
+    emit('ko', { winner: winner, value: S.value, summary: summary });
+    pauseRec();
+    stopCloud();
+    return true;
+  }
+
   var api = {
     start: start, say: say, listen: listen, stopListening: stopListening, on: on, off: off, config: config,
+    forceEnd: forceEnd,
     isListening: function () { return wantListen; },
     state: function () { return S && { cartridge: S.cartId, bossIndex: S.bossIndex, boss: S.boss.name, bossHP: S.bossHP, playerHP: S.playerHP, value: S.value, over: S.over, history: S.history.slice() }; },
     cartridges: carts,
