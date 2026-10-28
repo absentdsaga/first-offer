@@ -1,0 +1,509 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<link rel="icon" href="data:,">
+<title>FIRST OFFER</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+/* ===================== THEME (edit colors here) ===================== */
+:root {
+  --bg: #07031a; --panel: #120a2e; --ink: #f4f1ff; --dim: #8d86b3;
+  --pink: #ff2e88; --cyan: #22f3ff; --yellow: #ffe23d; --green: #39ff6a; --red: #ff3b3b; --purple: #9b5cff;
+  --font: 'Press Start 2P', ui-monospace, 'Courier New', monospace;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); font-family: var(--font); overflow: hidden; }
+body { background: radial-gradient(ellipse at 50% 30%, #2a0f5c 0%, var(--bg) 70%); -webkit-font-smoothing: none; }
+button, input { font-family: var(--font); }
+button { cursor: pointer; }
+.hidden { display: none !important; }
+
+/* CRT overlay */
+#crt { pointer-events: none; position: fixed; inset: 0; z-index: 100;
+  background: repeating-linear-gradient(to bottom, rgba(0,0,0,0) 0, rgba(0,0,0,0) 2px, rgba(0,0,0,.28) 3px, rgba(0,0,0,0) 4px);
+  box-shadow: inset 0 0 120px rgba(0,0,0,.85); animation: flicker 6s infinite; }
+@keyframes flicker { 0%,100% { opacity: 1; } 50% { opacity: .92; } 51% { opacity: 1; } }
+
+/* top-right toggles */
+#toggles { position: fixed; top: 8px; right: 8px; z-index: 90; display: flex; gap: 6px; align-items: center; }
+.chip { font-size: 9px; padding: 6px 8px; border: 2px solid var(--dim); background: rgba(0,0,0,.6); color: var(--dim); }
+#muteBtn { color: var(--cyan); border-color: var(--cyan); }
+
+/* screens */
+.screen { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 16px; gap: 18px; text-align: center; }
+.btn { font-size: clamp(11px, 2.2vw, 16px); padding: 14px 18px; color: var(--ink); background: var(--panel);
+  border: 4px solid var(--cyan); box-shadow: 4px 4px 0 #000, 0 0 14px rgba(34,243,255,.4); text-transform: uppercase; }
+.btn:hover, .btn:focus { background: var(--cyan); color: #000; outline: none; }
+.btn.pink { border-color: var(--pink); box-shadow: 4px 4px 0 #000, 0 0 14px rgba(255,46,136,.5); }
+.btn.pink:hover, .btn.pink:focus { background: var(--pink); color: #000; }
+.btn:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0 #000; }
+.heading { font-size: clamp(14px, 3.5vw, 26px); color: var(--yellow); text-shadow: 3px 3px 0 var(--pink); }
+.howto { font-size: clamp(8px, 1.6vw, 12px); color: var(--dim); line-height: 1.9; max-width: 640px; }
+.howto b { color: var(--green); font-weight: normal; }
+
+/* TITLE */
+.logo { font-size: clamp(32px, 9vw, 96px); line-height: 1.1; margin: 0; color: var(--yellow);
+  text-shadow: 4px 4px 0 var(--pink), 8px 8px 0 var(--purple), 0 0 30px rgba(255,226,61,.5);
+  transform: skewY(-4deg); letter-spacing: 2px; }
+.tagline { font-size: clamp(8px, 1.6vw, 13px); color: var(--cyan); }
+.blink { animation: blink 1s steps(1) infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+#pressStart { font-size: clamp(14px, 3vw, 24px); color: var(--ink); background: none; border: none; padding: 12px; }
+.credit { position: absolute; bottom: 18px; width: 100%; display: flex; justify-content: space-around; font-size: clamp(8px, 1.5vw, 12px); color: var(--dim); }
+
+/* CARTRIDGE + BOSS SELECT */
+.carts { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; }
+.cart { width: min(280px, 80vw); padding: 22px 12px; display: flex; flex-direction: column; gap: 12px; align-items: center; line-height: 1.6; }
+.cart .big { font-size: 40px; }
+.cart small { font-size: 8px; color: var(--dim); }
+.cart:hover small, .cart:focus small { color: #000; }
+.bossGrid { display: grid; grid-template-columns: repeat(3, minmax(0, 220px)); gap: 16px; width: 100%; justify-content: center; }
+.bossCard { padding: 14px 8px; display: flex; flex-direction: column; align-items: center; gap: 10px; position: relative; font-size: clamp(8px, 1.5vw, 12px); line-height: 1.5; }
+.bossCard .portrait { width: clamp(70px, 14vw, 130px); height: clamp(70px, 14vw, 130px); font-size: clamp(40px, 8vw, 76px); }
+.bossCard.final { border-color: var(--red); filter: grayscale(.6) brightness(.8); }
+.bossCard.final:hover, .bossCard.final:focus { filter: none; background: var(--red); }
+.lock { color: var(--red); font-size: 8px; }
+.bossCard:hover .lock, .bossCard:focus .lock { color: #000; }
+.back { font-size: 9px; padding: 8px 10px; border-width: 3px; }
+
+/* portraits (emoji in a chunky pixel frame) */
+.portrait { display: flex; align-items: center; justify-content: center; position: relative;
+  background: linear-gradient(#24104f, #0b0420); border: 4px solid var(--ink); box-shadow: 4px 4px 0 #000; image-rendering: pixelated; }
+.portrait .badge { position: absolute; right: -8px; bottom: -8px; font-size: .45em; }
+
+/* FIGHT */
+#fight { justify-content: flex-start; gap: 10px; padding: 40px 10px 12px; }
+.hud { width: 100%; max-width: 1100px; display: grid; grid-template-columns: 1fr auto 1fr; gap: 10px; align-items: center; }
+.side { display: flex; flex-direction: column; gap: 6px; font-size: clamp(8px, 1.5vw, 13px); }
+.side.right { align-items: flex-end; text-align: right; }
+.bar { width: 100%; height: clamp(14px, 2.6vw, 24px); background: var(--red); border: 3px solid var(--ink); box-shadow: 3px 3px 0 #000; position: relative; overflow: hidden; }
+.bar .ghost, .bar .fill { position: absolute; top: 0; bottom: 0; width: 100%; }
+.bar .ghost { background: #fff; transition: width 1s ease .35s; }
+.bar .fill { background: linear-gradient(var(--yellow), #e0a800); transition: width .25s; }
+.side.left .bar .ghost, .side.left .bar .fill { right: 0; }   /* YOU bar drains toward center, SF2 style */
+.side.right .bar .ghost, .side.right .bar .fill { left: 0; }
+.bar.low .fill { background: linear-gradient(var(--pink), #b0004a); animation: blink .5s steps(1) infinite; }
+.vs { text-align: center; font-size: clamp(7px, 1.2vw, 10px); color: var(--dim); line-height: 1.8; }
+#valueNum { display: block; font-size: clamp(12px, 2.6vw, 22px); color: var(--green); text-shadow: 0 0 10px var(--green); }
+.pop { animation: pop .35s; }
+@keyframes pop { 50% { transform: scale(1.4); } }
+
+.arena { position: relative; width: 100%; max-width: 1100px; flex: 1 1 auto; min-height: 110px; display: flex; justify-content: space-between; align-items: flex-end; padding: 0 4%;
+  border-bottom: 4px solid var(--purple); background: linear-gradient(transparent 70%, rgba(155,92,255,.18)); }
+.fighter { position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: clamp(8px, 1.4vw, 11px); }
+.fighter .portrait { width: clamp(80px, 17vh, 170px); height: clamp(80px, 17vh, 170px); font-size: clamp(46px, 10vh, 100px); }
+.fighter.player .portrait { border-color: var(--cyan); }
+.fighter.boss .portrait { border-color: var(--pink); }
+.fighter .portrait { animation: idle 1.2s steps(2) infinite; }
+@keyframes idle { 50% { transform: translateY(-4px); } }
+.fighter.flash .portrait { animation: flash .12s steps(1) 4; }
+@keyframes flash { 0% { background: #fff; filter: brightness(3); } 50% { background: var(--red); } }
+#thinking { position: absolute; top: -26px; right: -10px; background: var(--ink); color: #000; padding: 6px 8px; font-size: 12px; border: 3px solid #000; }
+#thinking::after { content: ''; position: absolute; bottom: -9px; left: 10px; border: 6px solid transparent; border-top-color: var(--ink); }
+
+.shake { animation: shake .35s; }
+@keyframes shake { 20% { transform: translate(-8px, 4px); } 40% { transform: translate(7px, -5px); } 60% { transform: translate(-5px, 3px); } 80% { transform: translate(4px, -2px); } }
+
+.shout { position: absolute; left: 50%; top: 38%; transform: translate(-50%, -50%); z-index: 20; pointer-events: none; white-space: nowrap;
+  font-size: clamp(22px, 7vw, 72px); color: var(--yellow); text-shadow: 4px 4px 0 var(--pink), -2px -2px 0 #000, 0 0 24px rgba(255,226,61,.7);
+  animation: shout 1.1s forwards; text-align: center; }
+.shout small { display: block; font-size: .3em; margin-top: 10px; color: var(--ink); text-shadow: 2px 2px 0 #000; }
+.shout.bad { color: var(--red); text-shadow: 4px 4px 0 #000, 0 0 24px rgba(255,59,59,.8); }
+@keyframes shout { 0% { transform: translate(-50%, -50%) scale(3); opacity: 0; } 15% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+  80% { opacity: 1; } 100% { transform: translate(-50%, -70%) scale(1); opacity: 0; } }
+.dmg { position: absolute; top: 0; left: 50%; font-size: clamp(14px, 3vw, 26px); color: var(--ink); text-shadow: 3px 3px 0 var(--red); animation: floatUp 1s forwards; pointer-events: none; z-index: 15; }
+@keyframes floatUp { from { transform: translate(-50%, 0); opacity: 1; } to { transform: translate(-50%, -70px); opacity: 0; } }
+.banner { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 30; pointer-events: none;
+  font-size: clamp(30px, 10vw, 110px); color: var(--yellow); text-shadow: 5px 5px 0 var(--pink), 10px 10px 0 #000; animation: shout 1.4s forwards; }
+
+.dialog { width: 100%; max-width: 1100px; background: var(--panel); border: 4px solid var(--ink); box-shadow: 0 0 0 4px #000, 6px 6px 0 4px #000; padding: 12px 14px; text-align: left; cursor: pointer; }
+.dialog .who { color: var(--pink); font-size: clamp(8px, 1.4vw, 11px); margin-bottom: 8px; }
+#bossText { font-size: clamp(11px, 2.1vw, 18px); line-height: 1.6; min-height: 3.2em; }
+#bossText::after { content: '\25BC'; color: var(--yellow); margin-left: 8px; animation: blink .6s steps(1) infinite; }
+#bossText.typing::after { content: ''; }
+.lines { width: 100%; max-width: 1100px; display: flex; flex-direction: column; gap: 6px; text-align: left; font-size: clamp(8px, 1.5vw, 12px); line-height: 1.6; min-height: 2.6em; }
+#playerText { color: var(--cyan); }
+#interimText { color: var(--dim); font-style: italic; }
+.controls { width: 100%; max-width: 1100px; display: flex; gap: 10px; align-items: stretch; flex-wrap: wrap; }
+#micBtn { flex: 0 0 auto; min-width: 150px; font-size: clamp(11px, 2vw, 16px); border-color: var(--pink); }
+#micBtn.on { background: var(--red); color: #fff; border-color: var(--yellow); animation: pulse 1s infinite; }
+@keyframes pulse { 50% { box-shadow: 0 0 0 6px rgba(255,59,59,.4), 4px 4px 0 #000; } }
+#textIn { flex: 1 1 200px; min-width: 0; font-size: clamp(10px, 1.8vw, 14px); padding: 12px; background: #000; color: var(--green); border: 4px solid var(--green); outline: none; }
+#textIn::placeholder { color: #2c7a43; }
+#sayBtn { border-color: var(--green); }
+.coach { width: 100%; max-width: 1100px; display: flex; gap: 10px; align-items: center; font-size: clamp(7px, 1.3vw, 10px); line-height: 1.7; text-align: left;
+  border: 3px dashed var(--yellow); padding: 8px 10px; color: var(--yellow); }
+.coach b { font-weight: normal; background: var(--yellow); color: #000; padding: 3px 6px; flex: 0 0 auto; }
+
+/* KO */
+#koBig { font-size: clamp(60px, 18vw, 200px); margin: 0; color: var(--red); text-shadow: 6px 6px 0 var(--yellow), 12px 12px 0 #000; animation: shout 1.6s forwards; animation-name: koIn; }
+@keyframes koIn { 0% { transform: scale(4); opacity: 0; } 30% { transform: scale(1); opacity: 1; } }
+#koResult { font-size: clamp(22px, 6vw, 56px); }
+#koResult.win { color: var(--green); text-shadow: 4px 4px 0 #000, 0 0 20px var(--green); }
+#koResult.lose { color: var(--red); text-shadow: 4px 4px 0 #000, 0 0 20px var(--red); }
+#koValue { font-size: clamp(12px, 2.6vw, 20px); color: var(--yellow); }
+#koSummary { font-size: clamp(8px, 1.5vw, 12px); line-height: 1.9; max-width: 760px; color: var(--ink); }
+.row { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; }
+
+/* phone portrait */
+@media (max-width: 600px) {
+  .bossGrid { grid-template-columns: 1fr; max-width: 300px; }
+  .bossCard { flex-direction: row; text-align: left; }
+  .hud { grid-template-columns: 1fr 1fr; }
+  .vs { grid-column: 1 / -1; grid-row: 2; }
+  #micBtn { flex: 1 1 100%; }
+  .credit { flex-direction: column; align-items: center; gap: 8px; }
+}
+@media (max-height: 560px) { #fight { gap: 6px; } .coach { display: none; } }
+</style>
+</head>
+<body>
+<div id="crt"></div>
+<div id="toggles">
+  <span id="offlineChip" class="chip hidden">OFFLINE MODE</span>
+  <button id="muteBtn" class="chip" title="Mute sound (M)">SOUND ON</button>
+</div>
+
+<!-- 1. TITLE -->
+<section id="title" class="screen">
+  <h1 class="logo">FIRST<br>OFFER</h1>
+  <div class="tagline">YOUR WORDS ARE YOUR MOVES</div>
+  <button id="pressStart" class="blink">PRESS START</button>
+  <div class="howto">HOW TO PLAY: <b>talk to fight.</b> Good moves hit the boss. Caving hits you.</div>
+  <div class="credit"><span class="blink">INSERT COIN</span><span>CREDIT 01</span><span>&copy;1991 INSPIRE 6</span></div>
+</section>
+
+<!-- 1b. CARTRIDGE SELECT -->
+<section id="carts" class="screen hidden">
+  <div class="heading">SELECT CARTRIDGE</div>
+  <div class="carts">
+    <button class="btn cart" data-cart="negotiate"><span class="big">&#x1F4BC;</span>NEGOTIATE<small>ENGLISH &middot; WIN $ ABOVE THE FIRST OFFER</small></button>
+    <button class="btn cart pink" data-cart="espanol"><span class="big">&#x1F1EA;&#x1F1F8;</span>ESPA&Ntilde;OL<small>SPEAK SPANISH &middot; SCORE POINTS</small></button>
+  </div>
+  <div class="howto">HOW TO PLAY: <b>talk to fight.</b> Good moves hit the boss. Caving hits you.</div>
+  <button class="btn back" data-go="title">&lt; BACK</button>
+</section>
+
+<!-- 1c. BOSS SELECT -->
+<section id="bosses" class="screen hidden">
+  <div class="heading">CHOOSE YOUR OPPONENT</div>
+  <div id="bossGrid" class="bossGrid"></div>
+  <div class="howto">HOW TO PLAY: <b>talk to fight.</b> Good moves hit the boss. Caving hits you.</div>
+  <button class="btn back" data-go="carts">&lt; BACK</button>
+</section>
+
+<!-- 2. FIGHT -->
+<section id="fight" class="screen hidden">
+  <div class="hud">
+    <div class="side left"><span>YOU</span><div class="bar" id="playerBar"><div class="ghost"></div><div class="fill"></div></div></div>
+    <div class="vs">VALUE WON<span id="valueNum">$0</span></div>
+    <div class="side right"><span id="bossName">BOSS</span><div class="bar" id="bossBar"><div class="ghost"></div><div class="fill"></div></div></div>
+  </div>
+  <div class="arena" id="arena">
+    <div class="fighter player" id="playerFighter"><div class="portrait">&#x1F9D1;<span class="badge">&#x1F3A4;</span></div>YOU</div>
+    <div class="fighter boss" id="bossFighter"><span id="thinking" class="hidden blink">...</span><div class="portrait" id="bossPortrait"></div><span id="bossLabel"></span></div>
+  </div>
+  <div class="dialog" id="dialog" title="Click to skip">
+    <div class="who" id="dialogWho">BOSS</div>
+    <div id="bossText"></div>
+  </div>
+  <div class="lines">
+    <div id="playerText"></div>
+    <div id="interimText"></div>
+  </div>
+  <div class="controls">
+    <button id="micBtn" class="btn">&#x1F3A4; MIC</button>
+    <input id="textIn" type="text" autocomplete="off" placeholder="...or type your line, press Enter">
+    <button id="sayBtn" class="btn">SAY</button>
+  </div>
+  <div class="coach"><b>COACH</b><span id="coachTip">Make your first move. Name a number, cite data, ask a question.</span></div>
+</section>
+
+<!-- 3. KO -->
+<section id="ko" class="screen hidden">
+  <h1 id="koBig">K.O.!</h1>
+  <div id="koResult">YOU WIN</div>
+  <div id="koValue"></div>
+  <div id="koSummary"></div>
+  <div class="row">
+    <button id="rematchBtn" class="btn">REMATCH</button>
+    <button id="nextBtn" class="btn pink">NEXT BOSS</button>
+    <button class="btn" data-go="title">TITLE</button>
+  </div>
+</section>
+
+<script src="cartridges.js"></script>
+<script src="engine.js"></script>
+<script>
+(function () {
+  'use strict';
+  var F = window.FirstOffer, CARTS = F.cartridges();
+  var $ = function (id) { return document.getElementById(id); };
+
+  // ?offline=1 forces the offline scorer (no server calls)
+  if (/[?&]offline=(1|true)/.test(location.search)) F.config.offline = true;
+
+  // ---------- portraits: [face, badge] per cartridge/boss index ----------
+  var PORTRAITS = {
+    negotiate: [['\u{1F60E}', '\u{1F697}'], ['\u{1F474}', '\u{1F3E0}'], ['\u{1F469}', '\u{1F4BC}']],
+    espanol:   [['\u{1F9D4}', '\u{1F34A}'], ['\u{1F468}', '\u{1F695}'], ['\u{1F935}', '\u{1F454}']]
+  };
+  function portraitHTML(cartId, i) {
+    var p = (PORTRAITS[cartId] || [])[i] || ['\u{1F479}', '\u2B50'];
+    return p[0] + '<span class="badge">' + p[1] + '</span>';
+  }
+
+  // ---------- game state (UI only; engine owns the real state) ----------
+  var G = { cart: null, boss: 0, value: 0, lastHP: { boss: 100, player: 100 }, over: false };
+  function cart() { return CARTS[G.cart]; }
+  function formatValue(v) {
+    return cart() && cart().valueMode === 'dollars' ? '$' + Number(v || 0).toLocaleString() : (v || 0) + ' PTS';
+  }
+
+  // ---------- screens ----------
+  var SCREENS = ['title', 'carts', 'bosses', 'fight', 'ko'];
+  function show(id) {
+    SCREENS.forEach(function (s) { $(s).classList.toggle('hidden', s !== id); });
+    if (id !== 'fight' && F.isListening()) { F.stopListening(); updateMic(); }
+    var first = $(id).querySelector('button:not(.back)');
+    if (id === 'fight') $('textIn').focus(); else if (first) first.focus();
+  }
+  document.querySelectorAll('[data-go]').forEach(function (b) {
+    b.addEventListener('click', function () { sfx('select'); show(b.getAttribute('data-go')); });
+  });
+
+  // ---------- 8-bit sound (WebAudio oscillators) ----------
+  var audio = null, muted = false;
+  try { muted = localStorage.getItem('fo_muted') === '1'; } catch (e) {}
+  function tone(freq, dur, type, delay, slideTo) {
+    if (muted || !audio || audio.state !== 'running') return;   // silent until a real user gesture unlocks audio
+    try {
+      var t = audio.currentTime + (delay || 0), o = audio.createOscillator(), g = audio.createGain();
+      o.type = type || 'square'; o.frequency.setValueAtTime(freq, t);
+      if (slideTo) o.frequency.exponentialRampToValueAtTime(slideTo, t + dur);
+      g.gain.setValueAtTime(0.12, t); g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+      o.connect(g); g.connect(audio.destination); o.start(t); o.stop(t + dur + 0.02);
+    } catch (e) {}
+  }
+  function sfx(kind) {
+    if (kind === 'select') { tone(660, .07); tone(990, .09, 'square', .07); }
+    else if (kind === 'hit') { tone(220, .18, 'sawtooth', 0, 60); tone(120, .12, 'square', .02, 40); }
+    else if (kind === 'hurt') { tone(160, .3, 'sawtooth', 0, 40); }
+    else if (kind === 'blip') { tone(1200, .015, 'square'); }
+    else if (kind === 'ko') { [523, 392, 330, 262, 196].forEach(function (f, i) { tone(f, .22, 'square', i * .16); }); }
+    else if (kind === 'win') { [523, 659, 784, 1047].forEach(function (f, i) { tone(f, .18, 'square', .9 + i * .13); }); }
+    else if (kind === 'fight') { tone(330, .1); tone(440, .1, 'square', .1); tone(660, .25, 'square', .2); }
+  }
+  function unlockAudio(e) {
+    if (e && e.isTrusted === false) return;
+    try {
+      audio = audio || new (window.AudioContext || window.webkitAudioContext)();
+      if (audio.state === 'suspended') audio.resume();
+    } catch (e) {}
+  }
+  ['pointerdown', 'keydown', 'touchstart'].forEach(function (ev) { document.addEventListener(ev, unlockAudio, true); });
+  function updateMute() { $('muteBtn').textContent = muted ? 'SOUND OFF' : 'SOUND ON'; }
+  function toggleMute() {
+    muted = !muted; updateMute();
+    try { localStorage.setItem('fo_muted', muted ? '1' : '0'); } catch (e) {}
+    if (muted && window.speechSynthesis) speechSynthesis.cancel();
+    sfx('select');
+  }
+  $('muteBtn').addEventListener('click', toggleMute);
+  updateMute();
+
+  // ---------- title ----------
+  function pressStart() { sfx('fight'); show('carts'); }
+  $('pressStart').addEventListener('click', pressStart);
+  $('title').addEventListener('click', function (e) { if (e.target === $('title')) pressStart(); });
+  document.addEventListener('keydown', function (e) {
+    if (!$('title').classList.contains('hidden') && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); pressStart(); }
+    if (e.key === 'm' && document.activeElement !== $('textIn')) toggleMute();
+  });
+
+  // ---------- cartridge + boss select ----------
+  document.querySelectorAll('[data-cart]').forEach(function (b) {
+    b.addEventListener('click', function () { sfx('select'); G.cart = b.getAttribute('data-cart'); buildBossGrid(); show('bosses'); });
+  });
+  function buildBossGrid() {
+    var grid = $('bossGrid'), bosses = cart().bosses, last = bosses.length - 1;
+    grid.innerHTML = '';
+    bosses.forEach(function (b, i) {
+      var card = document.createElement('button');
+      card.className = 'btn bossCard' + (i === last ? ' final' : '');
+      card.innerHTML = '<div class="portrait">' + portraitHTML(G.cart, i) + '</div><div><div class="nm"></div>' +
+        (i === last ? '<div class="lock">&#x1F512; FINAL BOSS</div>' : '<div class="lock" style="color:var(--dim)">STAGE ' + (i + 1) + '</div>') + '</div>';
+      card.querySelector('.nm').textContent = b.name.toUpperCase();
+      card.addEventListener('click', function () { startFight(i); });
+      grid.appendChild(card);
+    });
+  }
+
+  // ---------- fight ----------
+  function startFight(i) {
+    G.boss = i; G.value = 0; G.over = false; G.lastHP = { boss: 100, player: 100 };
+    var b = cart().bosses[i];
+    $('bossName').textContent = b.name.toUpperCase();
+    $('bossLabel').textContent = b.name.toUpperCase();
+    $('dialogWho').textContent = b.name.toUpperCase();
+    $('bossPortrait').innerHTML = portraitHTML(G.cart, i);
+    $('valueNum').textContent = formatValue(0);
+    $('playerText').textContent = ''; $('interimText').textContent = ''; $('bossText').textContent = '';
+    $('coachTip').textContent = (b.tips && b.tips[0]) || 'Make your first move.';
+    $('textIn').placeholder = G.cart === 'espanol' ? '...o escribe tu frase, pulsa Enter' : '...or type your line, press Enter';
+    setBar('playerBar', 100); setBar('bossBar', 100);
+    hitQueue = []; clearTimeout(hitTimer); hitTimer = null;
+    show('fight');
+    banner('ROUND 1', 0); banner('FIGHT!', 1000);
+    sfx('fight');
+    F.start(G.cart, i);
+  }
+  function banner(text, delay) {
+    setTimeout(function () {
+      var d = document.createElement('div'); d.className = 'banner'; d.textContent = text;
+      $('arena').appendChild(d); setTimeout(function () { d.remove(); }, 1400);
+    }, delay);
+  }
+  function setBar(id, hp) {
+    var bar = $(id);
+    bar.querySelector('.fill').style.width = hp + '%';
+    bar.querySelector('.ghost').style.width = hp + '%';
+    bar.classList.toggle('low', hp <= 25);
+  }
+
+  // say: typed fallback (works with mic denied)
+  function sendTyped() {
+    var t = $('textIn').value.trim();
+    if (!t || G.over) return;
+    $('textIn').value = '';
+    F.say(t);
+    $('textIn').focus();
+  }
+  $('sayBtn').addEventListener('click', sendTyped);
+  $('textIn').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); sendTyped(); } });
+
+  // mic
+  function updateMic() {
+    var on = F.isListening();
+    $('micBtn').classList.toggle('on', on);
+    $('micBtn').innerHTML = on ? '&#x1F534; LISTENING' : '&#x1F3A4; MIC';
+  }
+  $('micBtn').addEventListener('click', function () {
+    sfx('select');
+    if (F.isListening()) F.stopListening(); else F.listen();
+    updateMic();
+  });
+
+  // boss typewriter (click dialog to skip)
+  var typeTimer = null, typeFull = '';
+  function typewrite(text) {
+    clearInterval(typeTimer);
+    typeFull = text; var i = 0, el = $('bossText');
+    el.textContent = ''; el.classList.add('typing');
+    typeTimer = setInterval(function () {
+      i++; el.textContent = text.slice(0, i);
+      if (i % 3 === 0) sfx('blip');
+      if (i >= text.length) { clearInterval(typeTimer); el.classList.remove('typing'); }
+    }, 32);
+  }
+  $('dialog').addEventListener('click', function () { clearInterval(typeTimer); $('bossText').textContent = typeFull; $('bossText').classList.remove('typing'); });
+
+  // hit effects are queued so several moves in one turn play one after another
+  var hitQueue = [], hitTimer = null;
+  function playNextHit() {
+    var h = hitQueue.shift();
+    if (!h) { hitTimer = null; return; }
+    var onBoss = h.target !== 'player';
+    var name = String(h.move || 'HIT').toUpperCase().replace(/!*$/, '!');
+    var s = document.createElement('div');
+    s.className = 'shout' + (onBoss ? '' : ' bad');
+    s.textContent = name;
+    var sub = document.createElement('small'); sub.textContent = onBoss ? 'HIT -' + h.dmg : 'CAVED! -' + h.dmg;
+    s.appendChild(sub);
+    $('arena').appendChild(s); setTimeout(function () { s.remove(); }, 1150);
+
+    var fighter = onBoss ? $('bossFighter') : $('playerFighter');
+    fighter.classList.remove('flash'); void fighter.offsetWidth; fighter.classList.add('flash');
+    var d = document.createElement('div'); d.className = 'dmg'; d.textContent = '-' + h.dmg;
+    fighter.appendChild(d); setTimeout(function () { d.remove(); }, 1000);
+
+    G.lastHP[h.target === 'player' ? 'player' : 'boss'] = Math.max(0, G.lastHP[h.target === 'player' ? 'player' : 'boss'] - h.dmg);
+    setBar(onBoss ? 'bossBar' : 'playerBar', G.lastHP[onBoss ? 'boss' : 'player']);
+
+    var fight = $('fight');
+    fight.classList.remove('shake'); void fight.offsetWidth; fight.classList.add('shake');
+    sfx(onBoss ? 'hit' : 'hurt');
+    hitTimer = setTimeout(playNextHit, 650);
+  }
+
+  // ---------- engine events ----------
+  F.on('bossLine', function (e) {
+    typewrite(e.text || '');
+    if (muted && window.speechSynthesis) setTimeout(function () { speechSynthesis.cancel(); }, 0);
+  });
+  F.on('playerLine', function (e) { $('playerText').textContent = 'YOU: ' + e.text; $('interimText').textContent = ''; });
+  F.on('interim', function (e) { $('interimText').textContent = e.text ? '\u{1F3A4} ' + e.text + '...' : ''; });
+  F.on('thinking', function (e) { $('thinking').classList.toggle('hidden', !e.on); });
+  F.on('hit', function (e) {
+    hitQueue.push(e);
+    if (!hitTimer) playNextHit();
+  });
+  F.on('score', function (e) {
+    // bars follow the hit animation; snap to engine truth afterwards
+    var wait = hitQueue.length * 650 + 50;
+    setTimeout(function () {
+      G.lastHP = { boss: e.bossHP, player: e.playerHP };
+      setBar('bossBar', e.bossHP); setBar('playerBar', e.playerHP);
+    }, wait);
+    if (e.value !== G.value) {
+      G.value = e.value;
+      var v = $('valueNum'); v.textContent = formatValue(e.value);
+      v.classList.remove('pop'); void v.offsetWidth; v.classList.add('pop');
+    }
+    if (e.tip) $('coachTip').textContent = e.tip;
+    $('offlineChip').classList.toggle('hidden', !(e.offline || F.config.offline));
+  });
+  F.on('error', function (e) {
+    // never alarm the player: tiny chip only
+    var msg = String(e && e.message || '');
+    if (/^mic|speech recognition/i.test(msg)) {
+      updateMic();
+      $('interimText').textContent = G.cart === 'espanol' ? 'Micrófono no disponible: escribe tu frase.' : 'Mic unavailable: type your line instead.';
+      $('textIn').focus();
+    } else {
+      $('offlineChip').classList.remove('hidden');
+    }
+    if (window.console) console.info('[FIRST OFFER]', msg);
+  });
+  F.on('ko', function (e) {
+    G.over = true;
+    if (F.isListening()) { F.stopListening(); updateMic(); }
+    var win = e.winner === 'player', hits = hitQueue.length * 650;
+    setTimeout(function () {
+      banner('K.O.!', 0); sfx('ko'); if (win) sfx('win');
+      setTimeout(function () { showKO(win, e); }, 1500);
+    }, hits + 600);
+  });
+
+  function showKO(win, e) {
+    var bosses = cart().bosses, hasNext = G.boss < bosses.length - 1;
+    $('koResult').textContent = win ? 'YOU WIN' : 'YOU LOSE';
+    $('koResult').className = win ? 'win' : 'lose';
+    $('koValue').textContent = 'VALUE WON: ' + formatValue(e.value);
+    $('koSummary').textContent = e.summary || '';
+    $('nextBtn').classList.toggle('hidden', !hasNext);
+    $('nextBtn').textContent = hasNext ? 'NEXT BOSS: ' + bosses[G.boss + 1].name.toUpperCase() : 'NEXT BOSS';
+    var big = $('koBig'); big.style.animation = 'none'; void big.offsetWidth; big.style.animation = '';
+    show('ko');
+  }
+  $('rematchBtn').addEventListener('click', function () { sfx('select'); startFight(G.boss); });
+  $('nextBtn').addEventListener('click', function () { sfx('select'); startFight(G.boss + 1); });
+})();
+</script>
+</body>
+</html>
