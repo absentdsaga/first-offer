@@ -29,7 +29,7 @@
     musicBus = ctx.createGain(); musicBus.gain.value = 0;
     musicDuck = ctx.createGain(); musicDuck.gain.value = 1;
     musicBus.connect(musicDuck); musicDuck.connect(master);
-    sfxBus = ctx.createGain(); sfxBus.gain.value = 0.95; sfxBus.connect(master);
+    sfxBus = ctx.createGain(); sfxBus.gain.value = 0.6; sfxBus.connect(master);
     return true;
   }
   function unlock(e) {
@@ -244,7 +244,7 @@
     songGain = null; cur = null; curName = '';
     clearInterval(timer); timer = null;
   }
-  var LEVEL = { title: 0.9, select: 0.75, fight: 0.45, final: 0.45, flamenco: 0.48, flamencoFinal: 0.45 };
+  var LEVEL = { title: 0.55, select: 0.45, fight: 0.28, final: 0.3, flamenco: 0.3, flamencoFinal: 0.3 };
   function playSong(name) {
     if (!ctx || name === curName) return;
     stopMusic(0.4);
@@ -260,7 +260,7 @@
   function jingle(kind) {
     if (!ctx) return;
     var t = ctx.currentTime + 0.05, g = ctx.createGain(); g.gain.value = 1; g.connect(musicBus);
-    musicBus.gain.setTargetAtTime(0.85, ctx.currentTime, 0.05);
+    musicBus.gain.setTargetAtTime(0.5, ctx.currentTime, 0.05);
     if (kind === 'win') {
       var q = 60 / 140 / 2;
       [['C5', 0, 1], ['C5', 1, 1], ['C5', 2, 1], ['C5', 3, 2], ['Ab4', 5, 2], ['Bb4', 7, 2], ['C5', 9, 1], ['Bb4', 10, 1], ['C5', 11, 6]].forEach(function (n) {
@@ -411,7 +411,7 @@
       if (F && F.isListening && F.isListening()) target = 0.5;
       if (performance.now() < duckUntil) target = 0.3;
       if (speaking) target = 0.18;
-      if (F && F.isBossTalking && F.isBossTalking()) target = 0.08;
+      if (F && F.isBossTalking && F.isBossTalking()) target = 0.05;
     }
     musicDuck.gain.setTargetAtTime(target, ctx.currentTime, 0.12);
   }, 120);

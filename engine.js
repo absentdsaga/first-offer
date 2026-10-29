@@ -219,7 +219,7 @@
     var done = function () { if (ended) return; ended = true; if (audioEl === a) audioEl = null; talkEnd(); };
     a.onended = done;
     a.onerror = function () { if (ended) return; ended = true; if (audioEl === a) audioEl = null; if (myGen === gen && onFail) onFail(); else talkEnd(); };
-    talkStart(4000 + text.length * 110);
+    talkStart(9000 + text.length * 110);
     var p = a.play(); if (p && p.catch) p.catch(function () { a.onerror(); });
   }
   function browserSay(text, ch, onPlay) {
