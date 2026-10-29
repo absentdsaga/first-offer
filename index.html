@@ -648,6 +648,8 @@ body.nocoach .coach { display: none !important; }
       else if (x > 30 && ((x + y) & 1) && g[y][x + 2] === INK) lit.push([x, y, shade(cc, -0.14)]);
     }
     lit.forEach(function (p) { g[p[1]][p[0]] = p[2]; });
+    var sid = 'sp' + cacheKey.replace(/[^a-z0-9]/gi, '');
+    var body = [];
     var parts = ['<svg class="pix" viewBox="0 0 64 80" shape-rendering="crispEdges" aria-hidden="true">'];
     for (y = 0; y < H; y++) {
       x = 0;
@@ -657,8 +659,16 @@ body.nocoach .coach { display: none !important; }
         var x0 = x;
         while (x < W && g[y][x] === col) x++;
         parts.push('<rect x="' + x0 + '" y="' + y + '" width="' + (x - x0) + '" height="1" fill="' + col + '"/>');
+        if (col !== INK) body.push('<rect x="' + x0 + '" y="' + y + '" width="' + (x - x0) + '" height="1"/>');
       }
     }
+    // volume pass: key light from top-left, cool fill shadow bottom-right, warm rim on the far edge
+    parts.push('<defs><linearGradient id="' + sid + 'g" x1="0" y1="0" x2="1" y2="1">' +
+      '<stop offset="0" stop-color="#fff6e0" stop-opacity=".30"/><stop offset=".42" stop-color="#fff" stop-opacity="0"/>' +
+      '<stop offset=".62" stop-color="#1a1440" stop-opacity="0"/><stop offset="1" stop-color="#1a1440" stop-opacity=".42"/></linearGradient>' +
+      '<radialGradient id="' + sid + 'r" cx=".82" cy=".35" r=".45"><stop offset="0" stop-color="#ff7ab0" stop-opacity=".22"/><stop offset="1" stop-color="#ff7ab0" stop-opacity="0"/></radialGradient>' +
+      '<clipPath id="' + sid + 'c">' + body.join('') + '</clipPath></defs>' +
+      '<g clip-path="url(#' + sid + 'c)"><rect width="64" height="80" fill="url(#' + sid + 'g)"/><rect width="64" height="80" fill="url(#' + sid + 'r)"/></g>');
     parts.push('</svg>');
     SPRITE_CACHE[cacheKey] = parts.join('');
     return SPRITE_CACHE[cacheKey];
