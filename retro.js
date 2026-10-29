@@ -244,7 +244,7 @@
     songGain = null; cur = null; curName = '';
     clearInterval(timer); timer = null;
   }
-  var LEVEL = { title: 0.9, select: 0.75, fight: 0.62, final: 0.62, flamenco: 0.66, flamencoFinal: 0.62 };
+  var LEVEL = { title: 0.9, select: 0.75, fight: 0.45, final: 0.45, flamenco: 0.48, flamencoFinal: 0.45 };
   function playSong(name) {
     if (!ctx || name === curName) return;
     stopMusic(0.4);
@@ -369,7 +369,7 @@
     if (!ctx || !started) return;
     clearTimeout(koTimer);
     if (visible('title')) playSong('title');
-    else if (visible('carts') || visible('bosses')) playSong('select');
+    else if (visible('carts') || visible('fighters') || visible('bosses')) playSong('select');
     else if (visible('fight')) {
       var st = ($('arena') && $('arena').getAttribute('data-stage')) || 'negotiate-0';
       var esp = st.indexOf('espanol') === 0, fin = /-2$/.test(st);
@@ -378,7 +378,7 @@
   }
   function watch() {
     var mo = new MutationObserver(onScreen);
-    ['title', 'carts', 'bosses', 'fight', 'ko'].forEach(function (id) { var el = $(id); if (el) mo.observe(el, { attributes: true, attributeFilter: ['class'] }); });
+    ['title', 'carts', 'fighters', 'bosses', 'fight', 'ko'].forEach(function (id) { var el = $(id); if (el) mo.observe(el, { attributes: true, attributeFilter: ['class'] }); });
     var arena = $('arena');
     if (arena) new MutationObserver(function () {
       if (visible('fight')) { curName = ''; onScreen(); }
@@ -411,6 +411,7 @@
       if (F && F.isListening && F.isListening()) target = 0.5;
       if (performance.now() < duckUntil) target = 0.3;
       if (speaking) target = 0.18;
+      if (F && F.isBossTalking && F.isBossTalking()) target = 0.08;
     }
     musicDuck.gain.setTargetAtTime(target, ctx.currentTime, 0.12);
   }, 120);
@@ -418,5 +419,11 @@
   function boot() { watch(); hookEngine(); }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
 
-  window.Retro = { sfx: sfx, playSong: playSong, stopMusic: stopMusic, setMuted: setMuted, jingle: jingle, songs: Object.keys(SONGS) };
+  function level() { // debug: peak level on the master bus (0..1)
+    if (!ctx) return -1;
+    if (!level.a) { level.a = ctx.createAnalyser(); level.a.fftSize = 2048; comp.connect(level.a); }
+    var d = new Float32Array(2048); level.a.getFloatTimeDomainData(d);
+    var m = 0; for (var i = 0; i < d.length; i++) m = Math.max(m, Math.abs(d[i])); return m;
+  }
+  window.Retro = { level: level, now: function () { return curName; }, sfx: sfx, playSong: playSong, stopMusic: stopMusic, setMuted: setMuted, jingle: jingle, songs: Object.keys(SONGS) };
 })();

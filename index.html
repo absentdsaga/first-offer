@@ -338,12 +338,18 @@ body.nocoach .coach { display: none !important; }
   <button class="btn back" type="button" data-go="title">&lt; BACK</button>
 </section>
 
+<section id="fighters" class="screen hidden">
+  <h2 class="heading">CHOOSE YOUR FIGHTER</h2>
+  <div id="fighterGrid" class="bossGrid"></div>
+  <button class="btn back" type="button" data-go="carts">&lt; BACK</button>
+</section>
+
 <section id="bosses" class="screen hidden">
   <h2 class="heading">CHOOSE YOUR OPPONENT</h2>
   <button id="gauntletBtn" class="btn gauntlet" type="button">FIGHT ALL THREE</button>
   <div id="bossGrid" class="bossGrid"></div>
   <div class="rehearse">REHEARSAL: F4 PRACTICE LINE &middot; F9 END ROUND &middot; M MUTE &middot; ESC LEAVES THE TEXT BOX</div>
-  <button class="btn back" type="button" data-go="carts">&lt; BACK</button>
+  <button class="btn back" type="button" data-go="fighters">&lt; BACK</button>
 </section>
 
 <section id="fight" class="screen hidden">
@@ -486,6 +492,10 @@ body.nocoach .coach { display: none !important; }
     var INK = '#10080c';
     if (kind === 'gi') {
       top = WHITE; top2 = GI2; pants = WHITE; pants2 = W2; glove = RED; shoe = FOOT; hair = HAIR; hair2 = HAIR2; band = RED;
+    } else if (kind === 'hustler') {
+      top = '#7b3fe4'; top2 = '#4c2196'; pants = '#2e4a7a'; pants2 = '#1c2f52'; glove = SKIN; shoe = '#f4f4f4'; hair = '#d0122d'; hair2 = '#8c0c1e';
+    } else if (kind === 'closer') {
+      top = '#2a2f3a'; top2 = '#171a22'; pants = '#2a2f3a'; pants2 = '#171a22'; glove = SKIN; shoe = '#d0122d'; hair = '#6a2c14'; hair2 = '#42190a';
     } else if (kind === 'dealer') {
       top = '#e7c27a'; top2 = '#b8924e'; pants = '#30261e'; pants2 = '#1e1812'; glove = SKIN; shoe = '#603e24'; hair = '#56341c'; hair2 = '#341e10';
     } else if (kind === 'landlord') {
@@ -499,6 +509,8 @@ body.nocoach .coach { display: none !important; }
     } else {
       top = '#243860'; top2 = '#162440'; pants = '#0e141e'; pants2 = '#080c12'; glove = SKIN; shoe = '#e2dac8'; hair = '#d2d2d2'; hair2 = '#8c8c8c';
     }
+    if (kind === 'hustler') { SKIN = '#a8673f'; SKIN2 = '#7e4a2a'; }
+    if (kind === 'closer') { SKIN = '#e9a97e'; SKIN2 = '#c5835a'; }
     var lean = pose === 'punch' ? 4 : pose === 'hurt' ? -3 : 0;
     var wide = (kind === 'landlord') ? 3 : 0;
     var hand = kind === 'gi' ? glove : SKIN;
@@ -539,7 +551,7 @@ body.nocoach .coach { display: none !important; }
     rect(hx + 1, hy + 2, 16, 16, SKIN2);
     rect(hx + 2, hy + 3, 14, 14, SKIN);
     rect(hx, hy + 8, 3, 4, SKIN2);
-    var hat = kind === 'vendor' ? 'straw' : kind === 'taxi' ? 'cap' : '';
+    var hat = kind === 'vendor' ? 'straw' : (kind === 'taxi' || kind === 'hustler') ? 'cap' : '';
     var bald = kind === 'landlord';
     if (hat === 'straw') {
       rect(hx - 3, hy + 6, 22, 3, '#e6c15a');
@@ -562,6 +574,7 @@ body.nocoach .coach { display: none !important; }
         rect(hx + 15, hy + 7, 4, 2, band);
       }
       if (kind === 'dealer') rect(hx + 8, hy - 3, 10, 5, hair2);
+      if (kind === 'closer') { rect(hx - 2, hy + 3, 4, 17, hair); rect(hx + 15, hy + 3, 4, 15, hair); rect(hx + 3, hy - 1, 12, 3, hair2); rect(hx + 17, hy + 12, 2, 2, GOLD); }
       if (kind === 'recruiter' || kind === 'jefe') rect(hx + 4, hy + 1, 12, 2, hair2);
     }
     var eyeY = hy + 9;
@@ -599,6 +612,13 @@ body.nocoach .coach { display: none !important; }
       rect(22 + lean, 30, 4, 12, tie);
     }
     if (kind === 'dealer') { rect(20 + lean, 36, 10, 1, GOLD); rect(22 + lean, 37, 6, 1, GOLD); }
+    if (kind === 'hustler') {
+      rect(19 + lean, 26, 2, 10, GOLD); rect(29 + lean, 26, 2, 10, GOLD); rect(21 + lean, 35, 8, 2, GOLD); rect(23 + lean, 37, 4, 3, GOLD);
+      rect(18 + lean, 40, 14, 3, top2);
+    }
+    if (kind === 'closer') {
+      rect(20 + lean, 27, 8, 6, SHIRT); rect(23 + lean, 27, 2, 10, top2); rect(18 + lean, 30, 2, 12, '#3b4252'); rect(29 + lean, 30, 2, 12, '#3b4252');
+    }
     if (kind === 'vendor') {
       rect(18 + lean, 34, 14, 12, '#2f8f4e');
       rect(40 + lean, 40, 5, 5, '#ff8a1e');
@@ -612,6 +632,22 @@ body.nocoach .coach { display: none !important; }
       }
     }
     for (y = 0; y < add.length; y++) if (!g[add[y][1]][add[y][0]]) g[add[y][1]][add[y][0]] = INK;
+    var shade = function (hex, amt) {
+      var n = parseInt(hex.slice(1), 16), r = n >> 16, gg = (n >> 8) & 255, b = n & 255;
+      var f = function (c) { return Math.max(0, Math.min(255, Math.round(amt > 0 ? c + (255 - c) * amt : c * (1 + amt)))); };
+      return '#' + ((1 << 24) + (f(r) << 16) + (f(gg) << 8) + f(b)).toString(16).slice(1);
+    };
+    var SKIP = { '#fafafa': 1, '#ffffff': 1 }, lit = [];
+    for (y = 1; y < H - 1; y++) for (x = 1; x < W - 1; x++) {
+      var cc = g[y][x];
+      if (!cc || cc === INK || SKIP[cc] || cc.length !== 7) continue;
+      var up = g[y - 1][x] === INK, lf = g[y][x - 1] === INK, rt = g[y][x + 1] === INK, dn = g[y + 1][x] === INK;
+      if (up || lf) lit.push([x, y, shade(cc, up && lf ? 0.34 : 0.22)]);
+      else if (rt) lit.push([x, y, shade(cc, -0.28)]);
+      else if (dn) lit.push([x, y, shade(cc, -0.18)]);
+      else if (x > 30 && ((x + y) & 1) && g[y][x + 2] === INK) lit.push([x, y, shade(cc, -0.14)]);
+    }
+    lit.forEach(function (p) { g[p[1]][p[0]] = p[2]; });
     var parts = ['<svg class="pix" viewBox="0 0 64 80" shape-rendering="crispEdges" aria-hidden="true">'];
     for (y = 0; y < H; y++) {
       x = 0;
@@ -668,14 +704,14 @@ body.nocoach .coach { display: none !important; }
     return n + ' OFFER';
   }
 
-  var SCREENS = ['title', 'carts', 'bosses', 'fight', 'ko'];
+  var SCREENS = ['title', 'carts', 'fighters', 'bosses', 'fight', 'ko'];
   function show(id) {
     SCREENS.forEach(function (s) { $(s).classList.toggle('hidden', s !== id); });
     if (id !== 'fight') {
       if (F.isListening()) F.stopListening();
       updateMic();
       stopTimer();
-      if (id === 'title' || id === 'carts' || id === 'bosses') G.micWasOn = false;
+      if (id === 'title' || id === 'carts' || id === 'fighters' || id === 'bosses') G.micWasOn = false;
     }
     if (id === 'fight') $('textIn').focus();
   }
@@ -792,16 +828,47 @@ body.nocoach .coach { display: none !important; }
 
   $('cartFaceN').innerHTML = sprite('gi', 'idle');
   $('cartFaceS').innerHTML = sprite('vendor', 'idle');
-  $('playerSprite').innerHTML = sprite('gi', 'idle');
-  $('playerMini').innerHTML = sprite('gi', 'idle');
+  var FIGHTERS = [
+    { kind: 'gi', name: 'THE ROOKIE', sub: 'KARATE GI. ALL HEART.' },
+    { kind: 'hustler', name: 'THE HUSTLER', sub: 'HOODIE, CHAIN, NO FEAR.' },
+    { kind: 'closer', name: 'THE CLOSER', sub: 'SHARP SUIT. NEVER BLINKS.' }
+  ];
+  var playerKind = 'gi';
+  try { var savedP = localStorage.getItem('fo_fighter'); if (FIGHTERS.some(function (f) { return f.kind === savedP; })) playerKind = savedP; } catch (e) {}
+  function setPlayer(kind) {
+    playerKind = kind;
+    try { localStorage.setItem('fo_fighter', kind); } catch (e) {}
+    $('playerSprite').innerHTML = sprite(kind, 'idle');
+    $('playerMini').innerHTML = sprite(kind, 'idle');
+  }
+  setPlayer(playerKind);
+  function buildFighterGrid() {
+    var grid = $('fighterGrid');
+    grid.innerHTML = '';
+    FIGHTERS.forEach(function (f) {
+      var card = document.createElement('button');
+      card.type = 'button';
+      card.className = 'btn bossCard fighterCard' + (f.kind === playerKind ? ' picked' : '');
+      card.innerHTML = '<div class="face">' + sprite(f.kind, 'idle') + '</div><div class="nm"></div><div></div>';
+      card.querySelector('.nm').textContent = f.name;
+      card.lastChild.textContent = f.sub;
+      card.addEventListener('mouseenter', function () { card.querySelector('.face').innerHTML = sprite(f.kind, 'punch'); });
+      card.addEventListener('mouseleave', function () { card.querySelector('.face').innerHTML = sprite(f.kind, 'idle'); });
+      card.addEventListener('click', function () {
+        sfx('select'); setPlayer(f.kind);
+        buildBossGrid(); show('bosses');
+      });
+      grid.appendChild(card);
+    });
+  }
 
   document.querySelectorAll('[data-cart]').forEach(function (b) {
     b.addEventListener('click', function () {
       sfx('select');
       G.cart = b.getAttribute('data-cart');
       G.gauntlet = false;
-      buildBossGrid();
-      show('bosses');
+      buildFighterGrid();
+      show('fighters');
     });
   });
   function buildBossGrid() {
@@ -1034,8 +1101,8 @@ body.nocoach .coach { display: none !important; }
   $('bossBubble').title = 'Click to finish the line';
 
   function showCut(h, onBoss, token, round) {
-    var atk = onBoss ? 'gi' : castKey(G.cart, G.boss);
-    var def = onBoss ? castKey(G.cart, G.boss) : 'gi';
+    var atk = onBoss ? playerKind : castKey(G.cart, G.boss);
+    var def = onBoss ? castKey(G.cart, G.boss) : playerKind;
     var name = String(h.move || 'HIT').toUpperCase();
     var flex = /flex/i.test(name);
     var cut = $('cut');

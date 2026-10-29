@@ -51,7 +51,7 @@
 .btn.cart .label .title { font-size: clamp(12px, 1.8vw, 16px); text-shadow: 2px 2px 0 rgba(0,0,0,.25); }
 .btn.cart.red .label .title { text-shadow: 2px 2px 0 #000; }
 .btn.cart .label small { font-size: 7px; color: inherit; opacity: .85; line-height: 1.6; }
-.btn.cart .label .seal { position: absolute; right: 6px; bottom: 6px; width: 22px; height: 22px; border-radius: 50%;
+.btn.cart .label .seal { display: none; position: absolute; right: 6px; bottom: 6px; width: 22px; height: 22px; border-radius: 50%;
   background: radial-gradient(circle, #fff 0 35%, #c9a227 36% 100%); box-shadow: 0 0 0 2px rgba(0,0,0,.4); font-size: 0; }
 .btn.cart:hover, .btn.cart:focus { background: none; color: var(--ink); }
 .btn.cart:hover .shell, .btn.cart:focus .shell { filter: brightness(1.12); }
@@ -63,3 +63,9 @@
 .btn.cart.inserting { animation: cartIn .45s cubic-bezier(.5,0,.8,.3) forwards; }
 @keyframes cartIn { to { transform: translateY(-60px) scale(.9); opacity: 0; } }
 @media (max-width: 680px) { .btn.cart { width: min(240px, 72vw); } .btn.cart .shell { padding: 30px 18px 40px; } .btn.cart .label .face { width: 80px; height: 96px; } }
+
+/* fighter select + sprite depth */
+.fighterCard { border-color: var(--dim); }
+.fighterCard.picked { border-color: var(--green); box-shadow: 4px 4px 0 #000, 0 0 16px rgba(125,255,107,.45); }
+.fighterCard .face svg, .bossCard .face svg { filter: drop-shadow(0 4px 0 rgba(0,0,0,.45)); }
+#playerSprite > svg, #bossSprite > svg { filter: drop-shadow(0 6px 3px rgba(0,0,0,.5)); }

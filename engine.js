@@ -213,15 +213,16 @@
     if (audioEl) { try { audioEl.pause(); } catch (e) {} audioEl = null; }
     if (bossTalking) talkEnd();
   }
-  function playUrl(url, text, onFail) {
+  function playUrl(url, text, onFail, onPlay) {
     var a = audioEl = new Audio(url), myGen = gen, ended = false;
+    if (onPlay) a.onplaying = onPlay;
     var done = function () { if (ended) return; ended = true; if (audioEl === a) audioEl = null; talkEnd(); };
     a.onended = done;
     a.onerror = function () { if (ended) return; ended = true; if (audioEl === a) audioEl = null; if (myGen === gen && onFail) onFail(); else talkEnd(); };
     talkStart(4000 + text.length * 110);
     var p = a.play(); if (p && p.catch) p.catch(function () { a.onerror(); });
   }
-  function browserSay(text, ch) {
+  function browserSay(text, ch, onPlay) {
     if (!window.speechSynthesis || !window.SpeechSynthesisUtterance) return false;
     if (browserVoiceOk === false || !(speechSynthesis.getVoices() || []).length) return false;
     try {
@@ -229,28 +230,36 @@
       u.lang = S.cart.lang; u.rate = ch[0]; u.pitch = ch[1];
       if (v) u.voice = v;
       var done = function () { if (ended) return; ended = true; talkEnd(); };
-      u.onstart = function () { started = true; browserVoiceOk = true; };
+      u.onstart = function () { started = true; browserVoiceOk = true; if (onPlay) onPlay(); };
       u.onend = done; u.onerror = done;
       talkStart(2500 + text.length * 90);
       speechSynthesis.speak(u);
       // browser accepted the line but never started talking (Brave): switch this device to the server voice
-      setTimeout(function () { if (!started && !ended) { browserVoiceOk = false; ended = true; speechSynthesis.cancel(); serverSay(text); } }, 1500);
+      setTimeout(function () { if (!started && !ended) { browserVoiceOk = false; ended = true; speechSynthesis.cancel(); serverSay(text, onPlay); } }, 1500);
       return true;
     } catch (e) { return false; }
   }
-  function serverSay(text) {
+  function serverSay(text, onPlay, onFail) {
     if (!S) return;
-    playUrl(VOICE_URL + '?c=' + encodeURIComponent(S.cartId) + '&b=' + S.bossIndex + '&t=' + encodeURIComponent(text), text, talkEnd);
+    playUrl(VOICE_URL + '?c=' + encodeURIComponent(S.cartId) + '&b=' + S.bossIndex + '&t=' + encodeURIComponent(text), text, onFail || talkEnd, onPlay);
   }
+  // text appears the moment the voice starts (max 1.8 s wait) so the line and the voice land together.
+  // live lines: fast streamed server voice (~1.5 s); if it hasn't started in 2.5 s, the browser voice takes over.
   function bossSay(text) {
     S.history.push({ who: 'boss', text: text });
-    emit('bossLine', { text: text });
-    if (config.muted) return;
+    if (config.muted) { emit('bossLine', { text: text }); return; }
     stopVoice();
+    var myGen = gen, shown = false;
+    var show = function () { if (shown || myGen !== gen) return; shown = true; emit('bossLine', { text: text }); };
+    setTimeout(show, 1800);
     var ch = (CHAR[S.cartId] || [])[S.bossIndex] || [1, 1, false];
     var rec = (window.FIRST_OFFER_VOICE || {})[text];
-    if (rec) { playUrl(rec, text, function () { if (!browserSay(text, ch)) serverSay(text); }); return; }
-    if (!browserSay(text, ch)) serverSay(text);
+    if (rec) { playUrl(rec, text, function () { serverSay(text, show, function () { if (!browserSay(text, ch, show)) { show(); talkEnd(); } }); }, show); return; }
+    var playing = false, gaveUp = false;
+    var fallback = function () { if (gaveUp || myGen !== gen) return; gaveUp = true; stopVoice(); if (!browserSay(text, ch, show)) { show(); talkEnd(); } };
+    serverSay(text, function () { playing = true; show(); }, fallback);
+    // stay on the in-character server voice; only drop to the robotic browser voice if it never arrives
+    setTimeout(function () { if (!playing && browserVoiceOk !== false) fallback(); }, 12000);
   }
   if (window.speechSynthesis && speechSynthesis.addEventListener) speechSynthesis.addEventListener('voiceschanged', function () {});
 
@@ -388,6 +397,7 @@
     start: start, say: say, stopVoice: function () { stopVoice(); }, listen: listen, stopListening: stopListening, on: on, off: off, config: config,
     forceEnd: forceEnd,
     isListening: function () { return wantListen; },
+    isBossTalking: function () { return bossTalking; },
     state: function () { return S && { cartridge: S.cartId, bossIndex: S.bossIndex, boss: S.boss.name, bossHP: S.bossHP, playerHP: S.playerHP, value: S.value, over: S.over, history: S.history.slice() }; },
     cartridges: carts,
     _scoreOffline: function (line) { return S ? scoreOffline(line) : null; }
